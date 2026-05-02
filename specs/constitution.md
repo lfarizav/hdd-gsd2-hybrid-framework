@@ -14,10 +14,10 @@
 
 ```yaml
 project:
-  name: "YOUR_PROJECT_NAME"
-  purpose: "One-sentence description of what this project does and for whom."
-  owner: "YOUR_NAME / YOUR_TEAM"
-  repository: "https://github.com/OWNER/REPO"
+  name: "heritage"
+  purpose: "Deploys a Kubernetes cluster using kind with Calico CNI and pre-downloaded images, supporting N control-plane nodes and M worker nodes."
+  owner: "Luis Felipe Ariza Vesga"
+  repository: "https://github.com/lfarizav/hdd-gsd2-hybrid-framework.git"
 ```
 
 ---
@@ -30,7 +30,7 @@ project:
 1. **Security-first** — All data encrypted at rest and in transit. No secrets in source code.
 2. **User trust** — Clear privacy disclosures. No dark patterns. No silent data collection.
 3. **Testability** — Every public API has corresponding tests. Coverage threshold: 80%.
-4. **Readability over cleverness** — Descriptive names. Functional patterns. No `any`.
+4. **Readability over cleverness** — Descriptive names. Explicit error handling. No `interface{}` without justification.
 5. **Minimal instructions** — Per arXiv:2602.11988, only specify what agents cannot discover.
 
 ---
@@ -39,17 +39,16 @@ project:
 
 ```yaml
 technology:
-  language: TypeScript (strict mode)
-  runtime: Node.js 22+
-  testing: Jest + ts-jest
-  linting: ESLint + Prettier
+  language: Go 1.22+
+  runtime: Go 1.22+
+  testing: go test (stdlib) + testify for assertions
+  linting: golangci-lint
   style:
-    quotes: single
-    semicolons: false
-    indent: 2 spaces
+    formatting: gofmt + goimports (tabs, enforced by gofmt)
+    errors: explicit error returns, no panic in library code
   patterns:
-    preferred: functional
-    avoid: class (unless modelling a domain entity)
+    preferred: packages, interfaces, explicit error handling
+    avoid: global mutable state, init() side-effects
 ```
 
 ---
@@ -68,10 +67,10 @@ technology:
 
 | Gate | Requirement | Enforced By |
 |------|------------|-------------|
-| Tests pass | `npm test` exits 0 | CI/CD + GSD-2 auto-verify |
-| Coverage | ≥ 80% branches + lines | Jest threshold |
-| Lint clean | `npm run lint` exits 0 | CI/CD + pre-commit |
-| Type-check | `npm run typecheck` exits 0 | CI/CD |
+| Tests pass | `go test ./...` exits 0 | CI/CD + GSD-2 auto-verify |
+| Coverage | ≥ 80% statements | `go test -cover ./...` |
+| Lint clean | `golangci-lint run ./...` exits 0 | CI/CD + pre-commit |
+| Build clean | `go build ./...` exits 0 | CI/CD |
 | No secrets | Pre-commit scan passes | `.github/hooks/pre-commit` |
 
 ---
@@ -99,10 +98,10 @@ technology:
 ## Definition of Done
 
 A task is complete when:
-- [ ] Code compiles without errors (`npm run typecheck`)
-- [ ] All tests pass (`npm test`)
-- [ ] Coverage threshold maintained (`npm test -- --coverage`)
-- [ ] Lint clean (`npm run lint`)
+- [ ] Code compiles without errors (`go build ./...`)
+- [ ] All tests pass (`go test ./...`)
+- [ ] Coverage threshold maintained (`go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out`)
+- [ ] Lint clean (`golangci-lint run ./...`)
 - [ ] AGENTS.md boundaries respected
 - [ ] No `TODO` comments left without a linked issue
 
@@ -112,4 +111,4 @@ A task is complete when:
 
 | Date | Author | Change |
 |------|--------|--------|
-| <!-- DATE --> | <!-- AUTHOR --> | Initial constitution |
+| 2026-05-02 | Luis Felipe Ariza Vesga | Initial constitution — heritage project |

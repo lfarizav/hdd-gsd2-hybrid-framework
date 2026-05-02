@@ -21,32 +21,35 @@
 
 ## Testing
 
-- **Framework:** Jest + ts-jest
-- Tests live under `tests/unit/`, `tests/integration/`, and `tests/e2e/`
+- **Framework:** `go test` (stdlib) + `testify` for assertions
+- Unit tests live in `*_test.go` files alongside source; integration and e2e tests under `tests/integration/` and `tests/e2e/`
 - All tests **must pass** before a PR is merged; CI enforces this.
 - Add or update tests for every code change, even when not explicitly requested.
 - Never remove a failing test; fix it or open a follow-up issue.
-- Coverage threshold: **80 %** (branches + lines). Run `npm test -- --coverage`.
+- Coverage threshold: **80 %** (statements). Run `go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out`.
 
 ---
 
 ## Code style
 
-- **Language:** TypeScript (strict mode — `"strict": true` in tsconfig.json)
-- Single quotes, no semicolons, 2-space indent (enforced by Prettier)
-- Functional patterns preferred; avoid `class` unless modelling a domain entity
-- Descriptive names over comments — `getUserById` beats `getUser` + a comment
+- **Language:** Go 1.22+
+- Tabs for indentation, enforced by `gofmt` / `goimports`
+- Explicit error returns; no `panic` in library code
+- Descriptive names over comments — `fetchUserByID` beats `getUser` + a comment
 
-```typescript
+```go
 // ✅ Good
-async function fetchUserById(id: string): Promise<User> {
-  if (!id) throw new Error('User ID is required');
-  return db.users.findOne({ id });
+func fetchUserByID(id string) (*User, error) {
+	if id == "" {
+		return nil, errors.New("user ID is required")
+	}
+	return db.FindUser(id)
 }
 
-// ❌ Bad — vague name, missing guard, implicit any
-async function getUser(id) {
-  return db.users.findOne(id);
+// ❌ Bad — vague name, swallowed error, empty interface
+func getUser(id interface{}) interface{} {
+	u, _ := db.FindUser(fmt.Sprint(id))
+	return u
 }
 ```
 
@@ -66,11 +69,11 @@ async function getUser(id) {
 
 | ✅ Always | ⚠️ Ask first | 🚫 Never |
 |-----------|--------------|---------|
-| Write to `src/`, `tests/`, `docs/`, `specs/` | Add a new npm dependency | Commit `.env` or any secret |
+| Write to `internal/`, `cmd/`, `tests/`, `docs/`, `specs/` | Add a new Go module dependency | Commit `.env` or any secret |
 | Search peer-reviewed articles of recognized engineers or official docs for guidance | Search YouTube or publisher-owned, scholarly research databases and digital libraries for guidance | search wikipedia |
-| Run `npm test` before marking a task done | Modify CI/CD workflows | Edit `node_modules/` or `dist/` |
+| Run `go test ./...` before marking a task done | Modify CI/CD workflows | Edit `vendor/` or build outputs |
 | Follow naming conventions above | Refactor across many files at once | Remove or skip failing tests |
-| Use `npm run lint --fix` after edits | Change the database schema | Modify `package-lock.json` by hand |
+| Run `gofmt -w ./...` after edits | Change the database schema | Modify `go.sum` by hand |
 
 ---
 
@@ -79,7 +82,7 @@ async function getUser(id) {
 **Per the peer-reviewed study (Gloaguen et al., 2026):**
 
 ### ✅ Include (minimal, specific)
-- **Tool requirements**: "Use `npm` (not yarn)" or "Use `uv` for dependencies" — agents follow these (1.6× usage when mentioned)
+- **Tool requirements**: "Use `go` module commands (not dep or glide)" — agents follow these (1.6× usage when mentioned)
 - **Build/test commands**: Exact commands agents should run, nothing more
 - **Code style rules**: Specific conventions (e.g., "2-space indent", "single quotes, no semicolons")
 - **Critical security**: Only OWASP Top 10 or project-specific security boundaries

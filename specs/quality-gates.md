@@ -51,10 +51,11 @@
 **Commands run:**
 
 ```bash
-npm test -- --coverage     # tests pass + 80% coverage threshold
-npm run lint               # ESLint clean
-npm run typecheck          # TypeScript strict mode clean
-npm run build              # compiles without errors
+go test -coverprofile=coverage.out ./...   # tests pass
+go tool cover -func=coverage.out           # verify ≥ 80% statement coverage
+golangci-lint run ./...                    # lint clean
+go vet ./...                               # static analysis
+go build ./...                             # compiles without errors
 ```
 
 **Block condition:** Any command exits non-zero → GSD-2 auto-retries up to 3 times, then pauses for human intervention.
@@ -71,7 +72,7 @@ npm run build              # compiles without errors
 - [ ] DECISIONS.md updated with architectural decisions made during execution
 - [ ] KNOWLEDGE.md updated with lessons learned
 - [ ] Coverage report reviewed (`coverage/lcov-report/index.html`)
-- [ ] Security review completed (run `/security` agent or `npm audit`)
+- [ ] Security review completed (run `/security` agent or `govulncheck ./...`)
 
 **Command:**
 
@@ -91,10 +92,11 @@ specify clarify             # Surface ambiguities before planning
 specify analyze             # Cross-spec consistency check
 
 # Automated gate (run on every task — also in CI)
-npm test -- --coverage
-npm run lint
-npm run typecheck
-npm run build
+go test -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out
+golangci-lint run ./...
+go vet ./...
+go build ./...
 
 # GSD-2 reporting (run after each milestone)
 gsd export --html
