@@ -5,31 +5,31 @@
 
 ## Project
 
-**Name:** YOUR_PROJECT_NAME  
-**Purpose:** One-sentence description of what this project does and for whom.  
-**Owner:** YOUR_NAME / YOUR_TEAM  
-**Repository:** https://github.com/OWNER/REPO
+**Name:** heritage
+**Purpose:** Deploys a Kubernetes cluster using kind with Calico CNI and pre-downloaded images, supporting N control-plane nodes and M worker nodes.
+**Owner:** Luis Felipe Ariza Vesga
+**Repository:** https://github.com/lfarizav/hdd-gsd2-hybrid-framework.git
 
 ## Current Status
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Definition (Spec-Kit) | 🔄 In progress | `specs/constitution.md` populated |
-| Planning (GSD-v1) | ⬜ Not started | Waiting on Spec-Kit Gate 1 review |
+| Definition (Spec-Kit) | ✅ Complete | REQ-001 fully specified in `specs/requirements.md` |
+| Planning (GSD-v1) | 🔄 In progress | Creating ROADMAP.md with research checkpoints |
 | Execution (GSD-2) | ⬜ Not started | Waiting on GSD-v1 Gate 2 review |
 
 ## Architecture in One Paragraph
 
-> Write 2-4 sentences describing the system. What does it do, what does it
-> NOT do, and what are the key technical components? This paragraph is read
-> by every execution agent.
+Heritage is a shell-based provisioning tool that creates multi-node Kubernetes clusters using kind (Kubernetes in Docker) with Calico as the CNI plugin. It supports air-gap deployments by pre-loading all required container images before cluster bootstrap. It does NOT provide production cluster hardening, persistent storage, or cloud provider integration—those are out-of-scope. Core components: `cmd/kind-cluster` (CLI), `internal/kindcluster` (orchestration), `internal/imageload` (image management), `tests/` (comprehensive tests).
 
 ## Key Constraints
 
-- TypeScript strict mode — `any` is forbidden
-- 80% test coverage enforced by CI
-- All secrets managed via environment variables, never committed to git
+- Go 1.22+ — no `interface{}` without justification
+- 80% statement coverage enforced by `go test -cover`
+- Code with solid reasons, facts, evidence, or research — never guess
+- Research mandatory: check latest Go stdlib, kind, Calico docs before coding
 - OWASP Top 10 is the security baseline
+- All secrets managed via environment variables, never committed to git
 
 ## Links
 

@@ -32,7 +32,8 @@ project:
 3. **Testability** — Every public API has corresponding tests. Coverage threshold: 80%.
 4. **Readability over cleverness** — Descriptive names. Explicit error handling. No `interface{}` without justification.
 5. **Minimal instructions** — Per arXiv:2602.11988, only specify what agents cannot discover.
-
+6. **Guess** — If the model is unsure about a requirement or detail, it must ask for clarification instead of making assumptions. It also must make a research on internet to get facts and evidence before coding.
+7. **Use old or deprecated libraries** — Never use old or deprecated libraries, as they may have security vulnerabilities or lack support. Always check for the latest stable versions of dependencies and ensure they are actively maintained.
 ---
 
 ## Technology Constraints

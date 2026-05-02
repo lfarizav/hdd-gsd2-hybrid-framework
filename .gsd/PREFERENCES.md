@@ -110,3 +110,24 @@ hybrid:
   decisionsLog: .planning/DECISIONS.md  # append-only decision registry
   knowledgeBase: .planning/KNOWLEDGE.md # project knowledge
 ```
+
+---
+
+## Go Verification Commands (M001+)
+
+> Added in M001-S01-T03. Used by Makefile and manual-routine.sh.
+> All commands scoped to `./cmd/... ./internal/... ./tests/...` to exclude
+> third-party Go files in `node_modules/`.
+
+```yaml
+go_verification:
+  packages: "./cmd/... ./internal/... ./tests/..."
+  commands:
+    test:     "go test -coverprofile=coverage.out -covermode=atomic ./cmd/... ./internal/... ./tests/..."
+    vet:      "go vet ./cmd/... ./internal/... ./tests/..."
+    lint:     "golangci-lint run --timeout=5m"
+    build:    "go build ./cmd/kind-cluster"
+    coverage: "go tool cover -func=coverage.out"
+  coverage_threshold: 80   # percent statements on ./internal/... packages; CI skips check until internal/ has code
+  full_gate: "make test && make vet && make lint && make build"
+```

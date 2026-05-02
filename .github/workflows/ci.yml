@@ -45,3 +45,56 @@ jobs:
         if: always()
         with:
           fail_ci_if_error: false
+
+  go-ci:
+    name: Go CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify module integrity
+        run: go mod verify
+
+      - name: go vet
+        run: go vet ./cmd/... ./internal/... ./tests/...
+
+      - name: Build
+        run: go build ./cmd/kind-cluster
+
+      - name: Test with coverage
+        run: |
+          go test \
+            -coverprofile=coverage.out \
+            -covermode=atomic \
+            ./cmd/... ./internal/... ./tests/...
+          go tool cover -func=coverage.out
+
+      - name: Enforce 80% statement coverage
+        run: |
+          # Threshold applies to internal library packages only.
+          # Skip the check until at least one internal package exists.
+          internal_pkgs=$(go list ./internal/... 2>/dev/null | wc -l)
+          if [ "$internal_pkgs" -eq 0 ]; then
+            echo "No internal packages yet — coverage threshold check skipped"
+            exit 0
+          fi
+          total=$(go tool cover -func=coverage.out | grep '^total:' | awk '{print $3}' | tr -d '%')
+          echo "Total coverage: ${total}%"
+          if awk "BEGIN { exit (${total} + 0 >= 80) ? 0 : 1 }"; then
+            echo "✅ Coverage ${total}% >= 80%"
+          else
+            echo "❌ Coverage ${total}% is below the 80% threshold"
+            exit 1
+          fi
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          args: --timeout=5m

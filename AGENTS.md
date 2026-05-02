@@ -74,7 +74,7 @@ func getUser(id interface{}) interface{} {
 | Run `go test ./...` before marking a task done | Modify CI/CD workflows | Edit `vendor/` or build outputs |
 | Follow naming conventions above | Refactor across many files at once | Remove or skip failing tests |
 | Run `gofmt -w ./...` after edits | Change the database schema | Modify `go.sum` by hand |
-
+| Code with solid reasons, facts, evidences, or researches | Ask before doing if you are unsure | Guess|
 ---
 
 ## Research findings: What to include (and exclude) in AGENTS.md

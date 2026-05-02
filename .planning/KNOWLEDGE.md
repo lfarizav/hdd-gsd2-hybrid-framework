@@ -11,26 +11,35 @@
 
 ## Framework & Tooling Facts
 
-- **Test runner:** Jest + ts-jest. Run with `npm test`. Coverage threshold: 80% branches + lines.
-- **Linter:** ESLint with `@typescript-eslint`. Run with `npm run lint`. Auto-fix: `npm run lint -- --fix`.
-- **Type checker:** `tsc --noEmit`. Run with `npm run typecheck`.
-- **Build:** `tsc`. Run with `npm run build`. Output in `dist/`.
-- **Formatter:** Prettier. Single quotes, no semicolons, 2-space indent.
+- **Test runner:** `go test` (stdlib). Run with `go test ./...`. Coverage: `go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out`. Threshold: 80% statements.
+- **Linter:** `golangci-lint`. Run with `golangci-lint run ./...`. Config in `.golangci.yml` if needed.
+- **Vet:** `go vet`. Run with `go vet ./...`. Catches common Go mistakes.
+- **Build:** `go build ./cmd/kind-cluster`. Output: `./cmd/kind-cluster/kind-cluster` binary.
+- **Formatter:** `gofmt` (enforces tabs) + `goimports` (auto-import management). Both baked into most editors.
+- **Dependencies:** Manage via `go.mod` and `go get`. Verify versions against pkg.go.dev before pinning.
 
 ## Codebase Conventions
 
-- Functional patterns preferred. Use `class` only for domain entities.
-- Descriptive names: `getUserById` not `getUser` + a comment.
-- No `any`. No `@ts-ignore` without an explanation comment.
-- Validate at system boundaries only. No defensive checks inside pure functions.
+- **Packages:** organized by functionality. `internal/` for private packages, `cmd/` for CLI entry points.
+- **Error handling:** Explicit `error` returns; no `panic` in library code. Wrap errors with `fmt.Errorf("%w", err)` for context.
+- **Testing:** Table-driven tests preferred. Tests live in `*_test.go` files alongside source. Mock external calls (exec, kubectl, etc.).
+- **Naming:** Descriptive names: `fetchUserByID` not `getUser` + a comment. Avoid `interface{}` unless genuinely polymorphic.
+- **Logging:** Use stdlib `log` or `slog` (Go 1.21+). Log all command invocations and errors for observability.
+- **Configuration:** Store in `internal/kindcluster/config.go`. No hardcoded values in business logic.
 
 ## Known Constraints
 
-> Add constraints discovered during execution that aren't obvious from specs.
+- **Air-gap deployments:** Must pre-load ALL cluster images before kind bootstrap. Document image list in research.
+- **kind.sigs.k8s.io:** Kind version compatibility with Calico CNI must be validated during S01 research.
+- **Calico CNI:** Pod CIDR in kind cluster config must match Calico's expectations (default 10.244.0.0/16).
+- **Idempotency:** Script must detect existing cluster and fail gracefully unless --delete-existing flag is passed.
 
-*(None yet — append after first execution milestone)*
+## Known Decisions
 
----
+| Date | Decision | Rationale | Phase |
+|------|----------|-----------|-------|
+| 2026-05-02 | Use Go 1.22+ (not older) | Latest LTS version, security updates, performance improvements | Definition |
+| 2026-05-02 | Research-first, no guessing | Constitution value #6: all coding backed by facts, peer-reviewed sources, official docs | Definition |
 
 ## Lessons Learned
 
@@ -38,4 +47,4 @@
 
 | Date | Lesson | Phase |
 |------|--------|-------|
-| <!-- DATE --> | Initial project setup complete | Definition |
+| 2026-05-02 | Hybrid framework + research-mandatory values reduce hallucination in M001 planning | Planning |

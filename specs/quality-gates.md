@@ -13,8 +13,8 @@
 
 ### Gate 1 — Spec Review (before planning starts)
 
-**When:** After `specs/requirements.md` is written, before GSD-v1 planning.  
-**Who:** Human review required.  
+**When:** After `specs/requirements.md` is written, before GSD-v1 planning.
+**Who:** Human review required.
 **Checks:**
 
 - [ ] All requirements have acceptance criteria (Gherkin or equivalent)
@@ -29,8 +29,8 @@
 
 ### Gate 2 — Plan Review (before execution starts)
 
-**When:** After `.planning/ROADMAP.md` is written, before GSD-2 auto mode.  
-**Who:** Human review required.  
+**When:** After `.planning/ROADMAP.md` is written, before GSD-2 auto mode.
+**Who:** Human review required.
 **Checks:**
 
 - [ ] All milestones map back to requirements (traceability matrix complete)
@@ -46,8 +46,8 @@
 
 ### Gate 3 — Automated (runs on every GSD-2 task completion)
 
-**When:** After every GSD-2 task execution, automatically.  
-**Who:** GSD-2 auto-verify (configured in `.gsd/PREFERENCES.md`).  
+**When:** After every GSD-2 task execution, automatically.
+**Who:** GSD-2 auto-verify (configured in `.gsd/PREFERENCES.md`).
 **Commands run:**
 
 ```bash
@@ -64,8 +64,8 @@ go build ./...                             # compiles without errors
 
 ### Gate 4 — Milestone Review (before next milestone starts)
 
-**When:** After all slices in a milestone are marked complete.  
-**Who:** Human review required.  
+**When:** After all slices in a milestone are marked complete.
+**Who:** Human review required.
 **Checks:**
 
 - [ ] All acceptance criteria from `specs/requirements.md` verified

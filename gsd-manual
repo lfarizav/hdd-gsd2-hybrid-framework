@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# GSD Manual Execution Wrapper
+# =============================
+#
+# Quick-start wrapper for the GSD-2 manual routine.
+# Run this after completing each task to guide the next one.
+#
+# Usage:
+#   bash gsd-manual
+#   # or
+#   chmod +x gsd-manual && ./gsd-manual
+
+cd "$(dirname "$0")" || exit 1
+
+# Ensure we're in project root
+if [[ ! -f ".planning/ROADMAP.md" ]]; then
+    echo "❌ Not in heritage project root"
+    echo "   Expected: /home/lfarizav/hdd-gsd2-hybrid-framework"
+    exit 1
+fi
+
+# Source and run the manual routine
+bash .gsd/manual-routine.sh
