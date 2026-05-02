@@ -12,6 +12,7 @@ The project is designed as a **bootstrapping system** that generates production-
 - **Modularity** — Independent concerns (security, testing, documentation)
 - **Automation** — Minimal manual setup through idempotent scripts
 - **Type Safety** — TypeScript strict mode enforced from day one
+- **Hybrid Framework** — Three complementary layers eliminate LLM hallucination at every phase of delivery
 
 ---
 
@@ -290,6 +291,103 @@ graph LR
 
 ---
 
+## Hybrid Framework Architecture
+
+The project implements a **three-layer hybrid framework** that targets the four root causes of LLM hallucination in software development. Each layer is active in a different phase; no two layers operate simultaneously.
+
+```mermaid
+graph LR
+    subgraph Layer1["Layer 1 — Spec-Kit (Define)"]
+        SK1["specs/constitution.md"]
+        SK2["specs/requirements.md"]
+        SK3["specs/quality-gates.md"]
+        SK4[".specify/memory/"]
+    end
+
+    subgraph Layer2["Layer 2 — GSD-v1 (Plan)"]
+        GV1[".planning/ROADMAP.md"]
+        GV2[".planning/DECISIONS.md"]
+        GV3[".planning/KNOWLEDGE.md"]
+        GV4[".planning/config.json"]
+    end
+
+    subgraph Layer3["Layer 3 — GSD-2 (Execute)"]
+        G2[".gsd/PREFERENCES.md"]
+        G2db[".gsd/gsd.db (SQLite)"]
+    end
+
+    Layer1 -->|Gate 1 sign-off| Layer2
+    Layer2 -->|Gate 2 sign-off| Layer3
+
+    style Layer1 fill:#4c6ef5,color:#fff
+    style Layer2 fill:#51cf66,color:#fff
+    style Layer3 fill:#ffa94d,color:#000
+```
+
+### Layer 1 — Spec-Kit: Eliminates Ambiguity
+
+**Root cause addressed:** Ambiguity exploitation — the model fills underspecified requirements with training priors.
+
+| File | Purpose |
+|------|---------|
+| `specs/constitution.md` | Non-negotiable values; cascades to every downstream decision |
+| `specs/requirements.md` | Gherkin-style acceptance criteria; verifiable, not vague |
+| `specs/quality-gates.md` | 4 mandatory gates before phase transitions |
+| `.specify/memory/GOVERNANCE.md` | Constitutional context pre-loaded by Spec-Kit agents |
+| `.specify/memory/ARCHITECTURE.md` | Architecture context; updated after each milestone |
+
+**Install:** `uv tool install specify-cli --from 'git+https://github.com/github/spec-kit.git'`
+
+### Layer 2 — GSD-v1: Controls Context at Execution Time
+
+**Root cause addressed:** Context pollution — accumulated session garbage overrides earlier decisions.
+
+| File | Purpose |
+|------|---------|
+| `.planning/ROADMAP.md` | Milestone → slice → XML task plans with explicit `<must_haves>` |
+| `.planning/DECISIONS.md` | Append-only ADR log; pre-loaded by every execution agent |
+| `.planning/KNOWLEDGE.md` | Minimal project facts (per arXiv:2602.11988) |
+| `.planning/config.json` | Model, verification commands, constitution path |
+
+**Key mechanism:** Fresh 200K context per subagent. Each task agent starts clean; orchestrator context stays lean.
+
+**Install:** `npx get-shit-done-cc@latest` (no global install required)
+
+### Layer 3 — GSD-2: State Machine Across Sessions
+
+**Root cause addressed:** State amnesia — multi-session work contradicts earlier decisions.
+
+| File | Purpose |
+|------|---------|
+| `.gsd/PREFERENCES.md` | Model routing per phase, budget ceiling, auto-verify commands |
+| `.gsd/gsd.db` | SQLite state machine — authoritative source of truth (not committed) |
+
+**Key mechanism:** All milestones, slices, tasks, and decisions live in SQLite. Markdown files are rendered projections, not runtime state.
+
+**Install:** `npm install -g gsd-pi@latest`
+
+### Handoff Model
+
+```
+Spec-Kit active:   ████████░░░░░░░░░░░░░░░░░░░░░
+GSD-v1 active:     ░░░░░███████████░░░░░░░░░░░░░
+GSD-2 active:      ░░░░░░░░░░░░░░████████████░░░
+                   │             │             │
+                   Define        Plan          Execute
+                   (Gate 1)      (Gate 2)      (Gate 3+4)
+```
+
+No two frameworks are active simultaneously. Handoffs are file-based — no API integration, no shared runtime. Each framework reads files the previous framework wrote.
+
+### Scaffold Scripts
+
+| Script | Purpose | Files created |
+|--------|---------|--------------|
+| `scripts/scaffold-project.sh` | Base project (TypeScript, CI/CD, AGENTS.md) | 51+ |
+| `scripts/scaffold-hybrid-framework.sh` | Three-layer hybrid framework | 15 |
+
+---
+
 ## Key architectural decisions
 
 ### 1. Single Source of Truth via Symlinks
@@ -333,22 +431,13 @@ graph LR
 
 **Trade-off**: Requires more upfront type definitions; may feel verbose initially.
 
-### 5. GitHub Actions for CI/CD
+### 6. Hybrid Framework: Sequential Phases, File-Based Handoffs
 
-**Decision**: Built-in GitHub automation; no external CI systems required.
+**Decision**: Spec-Kit → GSD-v1 → GSD-2 operate in strict sequence with file-based handoffs, never simultaneously.
 
-**Rationale**:
-- Works out-of-the-box for GitHub repos
-- Standard in the ecosystem
-- Minimal configuration
+**Rationale**: Each framework targets a different root cause of LLM hallucination. Overlapping operation creates split-brain state (markdown vs. SQLite). Sequential operation with gate reviews ensures quality without integration complexity. Evidence base: `docs/FEASIBILITY_STUDY.md`.
 
-**Trade-off**: Less flexibility than specialized CI systems; requires GitHub.
-
----
-
-## Made with ❤️ by Luis Felipe Ariza Vesga
-
-This architecture was designed to accelerate agentic engineering adoption by eliminating setup friction and providing a principled foundation for AI-assisted development.
+**Trade-off**: Requires process discipline; not suitable for projects shorter than 6 weeks (setup overhead exceeds benefit).
 
 ---
 
@@ -356,5 +445,7 @@ This architecture was designed to accelerate agentic engineering adoption by eli
 
 - [README.md](../README.md) — Project overview and quick start
 - [AGENTS.md](../AGENTS.md) — Agent guidance and boundaries
+- [Hybrid Framework Guide](../HYBRID_FRAMEWORK_GUIDE.md) — Full integration guide
+- [Feasibility Study](FEASIBILITY_STUDY.md) — Research basis for the hybrid approach
 - [API Reference](api.md) — Generated API documentation
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — Development workflow

@@ -31,32 +31,88 @@ git clone https://github.com/OWNER/REPO.git
 cd REPO
 npm install
 
-# 2. Run the scaffold (creates 51+ project files)
+# 2. Run the base scaffold (creates 51+ project files)
 bash scripts/scaffold-project.sh
 
-# 3. Configure environment
+# 3. Install the hybrid framework (Spec-Kit + GSD-v1 + GSD-2)
+bash scripts/scaffold-hybrid-framework.sh
+# Optional: also install the CLIs
+bash scripts/scaffold-hybrid-framework.sh --install-clis
+
+# 4. Configure environment
 cp .env.example .env
 # Edit .env and fill in real values
 
-# 4. Run in development mode
-npm run dev
+# 5. Fill in the constitution (required before planning)
+# Edit specs/constitution.md — replace all placeholder text
 
-# 5. Run tests
+# 6. Run tests
 npm test
 ```
 
-## Project Scaffold
+## Hybrid Framework: Spec-Kit + GSD-v1 + GSD-2
 
-This project is **fully bootstrapped** using an idempotent scaffold script. All project structure, tooling, CI/CD, and agent configurations are defined in a single source of truth.
+This project implements a **three-layer hybrid framework** for enterprise-grade agentic engineering:
 
-### Run the scaffold
+| Layer | Framework | Role | Status |
+|-------|-----------|------|--------|
+| **Definition** | [Spec-Kit](https://github.com/github/spec-kit) (92.1K ⭐) | Requirements governance, constitutional clarity | ✅ Ready |
+| **Planning** | [GSD-v1](https://github.com/gsd-build/get-shit-done) (59.3K ⭐) — @glittercowboy/gsd-build | Context engineering, agent orchestration | ✅ Ready |
+| **Execution** | [GSD-2](https://github.com/gsd-build/gsd-2) (7K ⭐) — @glittercowboy/gsd-build | Autonomous execution, state management | ✅ Ready |
 
-```bash
-bash scripts/scaffold-project.sh          # First run — creates all project files
-bash scripts/scaffold-project.sh --force  # Re-run — overwrites existing files
+**See [HYBRID_FRAMEWORK_GUIDE.md](HYBRID_FRAMEWORK_GUIDE.md) for complete integration guide.**
+
+### Quick Overview
+
+```
+Spec-Kit (Define)  →  GSD-v1 (Plan)  →  GSD-2 (Execute)
+   ↓                     ↓                   ↓
+Specifications      Context-              Autonomous
++ Constitution      Engineered            Building
++ Quality Gates     Planning
 ```
 
-### What the scaffold creates
+**Example workflow:**
+```bash
+# 1. Define: Create specifications
+echo "# Constitution" > specs/constitution.md
+
+# 2. Plan: GSD-v1 planning with Spec-Kit context
+/gsd-new-project --constitution specs/constitution.md
+
+# 3. Execute: GSD-2 autonomous execution (overnight)
+gsd /gsd auto
+
+# 4. Verify: Compliance gates
+spec-kit gate verify-artifacts
+```
+
+See [HYBRID_FRAMEWORK_GUIDE.md](HYBRID_FRAMEWORK_GUIDE.md) for:
+- 📖 Deep dives on each framework
+- 🔗 Integration patterns (layer-to-layer)
+- 👥 Team collaboration workflows
+- ⚡ Command cheat sheets
+
+---
+
+## Project Scaffold
+
+This project is **fully bootstrapped** using two idempotent scripts. Run them in order: the base scaffold first, then the hybrid framework scaffold.
+
+### Run the scaffolds
+
+```bash
+# Step 1 — Base project (TypeScript, tests, CI/CD, agent instructions)
+bash scripts/scaffold-project.sh          # First run — creates 51+ project files
+bash scripts/scaffold-project.sh --force  # Re-run — overwrites existing files
+
+# Step 2 — Hybrid framework (Spec-Kit + GSD-v1 + GSD-2)
+bash scripts/scaffold-hybrid-framework.sh                # Create framework files
+bash scripts/scaffold-hybrid-framework.sh --force        # Overwrite existing
+bash scripts/scaffold-hybrid-framework.sh --install-clis # Also install CLIs
+```
+
+### What `scaffold-project.sh` creates
 
 **51+ files across 8 categories:**
 
@@ -110,6 +166,16 @@ When any tool reads `.github/copilot-instructions.md`, the OS automatically reso
 - **OWASP A02 hardened**: Pre-commit hook blocks secrets (API keys, certificates, credentials) automatically
 - **Agent personas**: Specialised agents for testing, linting, docs, and security in `.github/agents/`
 - **Prompt templates**: Reusable guidance in `.github/prompts/` for consistent agent-assisted workflows
+
+### What `scaffold-hybrid-framework.sh` creates
+
+**15 framework files across 3 layers:**
+
+| Layer | Files | Purpose |
+|-------|-------|------|
+| **Spec-Kit** (Definition) | `specs/constitution.md`, `specs/requirements.md`, `specs/quality-gates.md`, `.specify/memory/GOVERNANCE.md`, `.specify/memory/ARCHITECTURE.md` | Executable specifications, constitutional governance, 4-gate quality system |
+| **GSD-v1** (Planning) | `.planning/config.json`, `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`, `.planning/ROADMAP.md`, `.planning/STATE.md`, `.planning/DECISIONS.md`, `.planning/KNOWLEDGE.md` | Context-engineered planning, append-only decision log, knowledge base |
+| **GSD-2** (Execution) | `.gsd/PREFERENCES.md` | Model routing per phase, budget ceiling, auto-verify commands, stuck detection |
 
 ---
 
@@ -351,12 +417,13 @@ graph TB
 
 ## Next steps
 
-1. **Run the scaffold**: `bash scripts/scaffold-project.sh`
-2. **Read AGENTS.md**: Understand the unified agent guidance
-3. **Configure environment**: Copy `.env.example` → `.env`
-4. **Run tests**: `npm test` — verify everything works
-5. **Start coding**: Edit `src/` with your AI assistant
-6. **Review Pull Requests**: See CI/CD, security, and agent workflows in action
+1. **Run the base scaffold**: `bash scripts/scaffold-project.sh`
+2. **Run the hybrid scaffold**: `bash scripts/scaffold-hybrid-framework.sh`
+3. **Fill in the constitution**: Edit `specs/constitution.md` — no placeholders
+4. **Configure environment**: Copy `.env.example` → `.env`
+5. **Run tests**: `npm test` — verify everything works
+6. **Start the hybrid workflow**: `specs/constitution.md` → `.planning/ROADMAP.md` → `gsd auto`
+7. **Review Pull Requests**: See CI/CD, security, and agent workflows in action
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full development workflow.
 
@@ -365,12 +432,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full development workflow.
 ## Documentation
 
 ### Getting Started
-- **[Getting Started Guide](docs/GETTING_STARTED.md)** — Step-by-step setup (5 minutes)
+- **[Getting Started Guide](docs/GETTING_STARTED.md)** — Step-by-step setup including hybrid framework
 - **[Why Use This?](docs/WHY_USE_THIS.md)** — Benefits and ROI analysis
 - **[Quick Start](#quick-start)** — Clone, scaffold, run tests (above)
 
+### Hybrid Framework
+- **[Hybrid Framework Guide](HYBRID_FRAMEWORK_GUIDE.md)** — Full integration guide (Spec-Kit + GSD-v1 + GSD-2)
+- **[Feasibility Study](docs/FEASIBILITY_STUDY.md)** — Research-backed case for the hybrid + hallucination analysis
+- **[GSD-v1 → GSD-2 Evolution](docs/GSD-V1-TO-V2-EVOLUTION.md)** — How the two GSD frameworks differ
+
 ### Project Reference
-- **[Architecture](docs/architecture.md)** — System design and components
+- **[Architecture](docs/architecture.md)** — System design, components, and hybrid layer model
 - **[API Reference](docs/api.md)** — Generated API documentation
 - **[Contributing](CONTRIBUTING.md)** — Development workflow and standards
 - **[AGENTS.md](AGENTS.md)** — Unified agent guidance and boundaries

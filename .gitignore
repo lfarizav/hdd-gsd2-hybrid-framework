@@ -124,3 +124,10 @@ desktop.ini
 .cache/
 tmp/
 temp/
+
+# ── Hybrid Framework (Spec-Kit + GSD-v1 + GSD-2) ─────────────────────────────
+.gsd/gsd.db             # GSD-2 SQLite state — generated, not committed
+.gsd/*.lock             # GSD-2 lock files
+.gsd/reports/           # GSD-2 HTML reports — generated artifacts
+.specify/cache/         # Spec-Kit cache
+

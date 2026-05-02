@@ -1,0 +1,23 @@
+{
+  "project": "YOUR_PROJECT_NAME",
+  "description": "One-sentence description of your project",
+  "model": "claude-opus-4-5",
+  "maxTokens": 200000,
+  "parallelExecution": true,
+  "constitutionFile": "specs/constitution.md",
+  "requirementsFile": "specs/requirements.md",
+  "verificationCommands": [
+    "npm test -- --coverage",
+    "npm run lint",
+    "npm run typecheck",
+    "npm run build"
+  ],
+  "gsd2RoadmapOutput": ".gsd/STATE.md",
+  "hybridFramework": {
+    "enabled": true,
+    "specKitConstitution": "specs/constitution.md",
+    "specKitRequirements": "specs/requirements.md",
+    "specKitQualityGates": "specs/quality-gates.md",
+    "handoffToGSD2": ".planning/ROADMAP.md"
+  }
+}

@@ -14,6 +14,7 @@ By the end of this guide, you'll have:
 ✅ Code quality gates (linting, formatting, type-checking)
 ✅ Security hardening with pre-commit hooks
 ✅ GitHub CI/CD workflows
+✅ Hybrid framework: Spec-Kit + GSD-v1 + GSD-2 installed and ready
 
 ---
 
@@ -78,7 +79,53 @@ graph LR
 
 ---
 
-## Step 3: Configure environment variables
+## Step 3: Install the hybrid framework
+
+```bash
+bash scripts/scaffold-hybrid-framework.sh
+```
+
+**Optional — also install the CLIs** (Spec-Kit and GSD-2):
+
+```bash
+bash scripts/scaffold-hybrid-framework.sh --install-clis
+```
+
+**What this creates** (15 files across 3 layers):
+
+```
+Layer 1 — Spec-Kit (Definition)
+  specs/constitution.md          ← Fill in first — everything cascades from here
+  specs/requirements.md          ← Gherkin-style feature requirements
+  specs/quality-gates.md         ← 4 gates: Spec Review, Plan Review, Auto, Milestone
+  .specify/memory/GOVERNANCE.md  ← Constitutional context loaded by Spec-Kit agents
+  .specify/memory/ARCHITECTURE.md ← Architecture context
+
+Layer 2 — GSD-v1 (Planning)
+  .planning/config.json          ← Model, verification commands, constitution path
+  .planning/PROJECT.md           ← Project overview for planning agents
+  .planning/REQUIREMENTS.md      ← Planning-level breakdown of requirements
+  .planning/ROADMAP.md           ← Milestone → slice → task hierarchy
+  .planning/STATE.md             ← Current planning state snapshot
+  .planning/DECISIONS.md         ← Append-only architectural decision log
+  .planning/KNOWLEDGE.md         ← Project knowledge (minimal — per arXiv:2602.11988)
+
+Layer 3 — GSD-2 (Execution)
+  .gsd/PREFERENCES.md            ← Model routing, budget ceiling, auto-verify config
+```
+
+**Critical first action** — fill in the constitution:
+
+```bash
+# Open and replace ALL placeholder text
+nano specs/constitution.md
+```
+
+> The constitution is the load-bearing document. Vague constitution → vague results at every phase.
+
+---
+
+## Step 4: Configure environment variables
 
 ```bash
 # Copy the template
@@ -105,7 +152,7 @@ API_KEY=your-secret-key-here
 
 ---
 
-## Step 4: Verify setup with tests
+## Step 5: Verify setup with tests
 
 ```bash
 # Run all checks
@@ -127,7 +174,7 @@ Coverage: ✓ 80% (exceeds threshold)
 
 ---
 
-## Step 5: Open in VS Code
+## Step 6: Open in VS Code
 
 ```bash
 code .
@@ -154,7 +201,7 @@ Click **[Install]** to get recommended tools:
 
 ---
 
-## Step 6: Start coding with your AI assistant
+## Step 7: Start coding with your AI assistant
 
 Open any file in `src/` and start chatting with your AI assistant:
 
@@ -311,7 +358,41 @@ $ git commit -m "add config"
 ❌ REJECTED: .env detected in commit
 ```
 
-### 5. Work with your AI assistant
+### 5. Start the hybrid workflow
+
+With the hybrid framework installed (Step 3), follow the three-phase workflow:
+
+**Phase 1 — Define (Spec-Kit)**
+
+```bash
+# Fill in specs/constitution.md (required — no placeholders)
+# Write specs/requirements.md with Gherkin acceptance criteria
+specify clarify     # surface ambiguities before planning
+specify analyze     # cross-spec consistency check
+# Review specs/quality-gates.md Gate 1 checklist
+```
+
+**Phase 2 — Plan (GSD-v1)**
+
+```bash
+npx get-shit-done-cc@latest
+# Or use /gsd-discuss-phase in your IDE
+# Populate .planning/ROADMAP.md with milestones, slices, XML task plans
+# Review specs/quality-gates.md Gate 2 checklist
+```
+
+**Phase 3 — Execute (GSD-2)**
+
+```bash
+gsd             # step-by-step mode (recommended first time)
+gsd auto        # autonomous mode (after Gate 2 sign-off)
+gsd status      # check progress
+gsd export --html  # generate milestone report
+```
+
+**For the full workflow, see [HYBRID_FRAMEWORK_GUIDE.md](../HYBRID_FRAMEWORK_GUIDE.md) and [docs/FEASIBILITY_STUDY.md](FEASIBILITY_STUDY.md).**
+
+### 6. Work with your AI assistant
 
 Use unified agent instructions from `AGENTS.md`:
 
@@ -488,10 +569,12 @@ This scaffolding system was created to eliminate setup friction and help develop
 
 ## Resources
 
-- [Project README](../README.md) — Overview
-- [Architecture Guide](architecture.md) — System design
-- [Contributing Guide](../CONTRIBUTING.md) — How to contribute
-- [AGENTS.md](../AGENTS.md) — Agent standards and boundaries
+- [Project README](../README.md) — Overview and quick start
+- [Hybrid Framework Guide](../HYBRID_FRAMEWORK_GUIDE.md) — Full three-layer integration guide
+- [Feasibility Study](FEASIBILITY_STUDY.md) — Research basis for the hybrid approach
+- [Architecture Guide](architecture.md) — System design, components, and hybrid layer model
+- [Contributing Guide](../CONTRIBUTING.md) — Development workflow and standards
+- [AGENTS.md](../AGENTS.md) — Agent guidance and boundaries
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/) — Language reference
 - [Jest Documentation](https://jestjs.io/docs/getting-started) — Testing framework
 - [Conventional Commits](https://www.conventionalcommits.org/) — Commit message standard
