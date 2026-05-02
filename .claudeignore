@@ -1,0 +1,10 @@
+# Files Claude Code should skip when indexing the repository.
+# Keep this list focused on noise; don't exclude source files.
+
+node_modules/
+dist/
+build/
+coverage/
+*.lock
+*.log
+.git/

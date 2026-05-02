@@ -1,0 +1,126 @@
+# =============================================================================
+# .gitignore — Security-first rules
+# =============================================================================
+# CRITICAL: secrets and credentials must NEVER be committed.
+# If you accidentally commit a secret, rotate it immediately.
+# =============================================================================
+
+# ── Secrets & credentials (OWASP A02 — Cryptographic Failures) ──────────────
+.env
+.env.*
+!.env.example           # .env.example is safe — it contains no real values
+*.key
+*.pem
+*.p12
+*.pfx
+*.cert
+*.crt
+*.cer
+*.csr
+secrets/
+credentials/
+*_secrets.*
+*secret*                # catches myapp_secret.json etc.
+*credential*
+*.token
+auth.json
+serviceAccountKey.json
+gcp-key.json
+aws-credentials
+
+# ── API keys and config patterns ─────────────────────────────────────────────
+.api_keys
+api_keys.*
+config/secrets.*
+config/credentials.*
+
+# ── Node.js ──────────────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+.npm
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+
+# ── TypeScript ────────────────────────────────────────────────────────────────
+*.tsbuildinfo
+*.js.map
+
+# ── Test & coverage ───────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+playwright-report/
+
+# ── Large files & datasets ────────────────────────────────────────────────────
+# Use Git LFS or external storage for these instead.
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+*.bz2
+*.7z
+*.rar
+*.iso
+*.dmg
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
+*.csv           # datasets can be large; store in data/ and exclude or use LFS
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.npy
+*.npz
+*.bin           # model weights
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# ── OS artefacts ──────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── IDEs & editors ────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+.eclipse/
+*.sublime-workspace
+*.sublime-project
+.history/
+*.swp
+*.swo
+*~
+
+# ── VS Code (keep settings.json and extensions.json but not private state) ───
+.vscode/launch.json       # can contain personal debug configs
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+.cache/
+tmp/
+temp/

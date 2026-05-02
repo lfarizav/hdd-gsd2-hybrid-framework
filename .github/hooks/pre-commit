@@ -1,0 +1,66 @@
+#!/bin/bash
+# =============================================================================
+# Pre-commit hook — blocks accidental secret commits (OWASP A02)
+# =============================================================================
+# Install:   ln -sf ../../.github/hooks/pre-commit .git/hooks/pre-commit
+# Uninstall: rm .git/hooks/pre-commit
+# =============================================================================
+
+set -euo pipefail
+
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+RESET='\033[0m'
+
+# Patterns that should never be committed
+FORBIDDEN_PATTERNS=(
+  "PRIVATE KEY"
+  "BEGIN CERTIFICATE"
+  "api[_-]?key"
+  "secret[_-]?key"
+  "password[=:]"
+  "token[=:]"
+  "credentials"
+  "AWS_SECRET"
+  "STRIPE_SECRET"
+)
+
+# Files that should never be staged
+FORBIDDEN_FILES=(
+  ".env"
+  "*.key"
+  "*.pem"
+  "*.p12"
+  "*.pfx"
+)
+
+LEAKED=false
+
+# Check for patterns in staged files
+while IFS= read -r file; do
+  [[ -z "$file" ]] && continue
+  for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
+    if git show ":$file" 2>/dev/null | grep -qi "$pattern"; then
+      echo -e "${RED}✗ Secret pattern detected in $file: $pattern${RESET}"
+      LEAKED=true
+    fi
+  done
+done < <(git diff --cached --name-only)
+
+# Check for forbidden file paths in staged files
+while IFS= read -r file; do
+  [[ -z "$file" ]] && continue
+  for forbidden in "${FORBIDDEN_FILES[@]}"; do
+    if [[ "$file" == *"$forbidden" ]]; then
+      echo -e "${RED}✗ Forbidden file staged: $file${RESET}"
+      LEAKED=true
+    fi
+  done
+done < <(git diff --cached --name-only)
+
+if [[ "$LEAKED" == true ]]; then
+  echo -e "${RED}Commit blocked: secrets detected. Check git diff --cached.${RESET}"
+  exit 1
+fi
+
+exit 0

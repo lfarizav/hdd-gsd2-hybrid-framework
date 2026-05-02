@@ -1,0 +1,51 @@
+{
+  // ── Editor ────────────────────────────────────────────────────────────────
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.rulers": [80, 120],
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.trimAutoWhitespace": true,
+
+  // ── TypeScript ─────────────────────────────────────────────────────────────
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.inlayHints.parameterNames.enabled": "literals",
+  "typescript.inlayHints.returnTypes.enabled": true,
+
+  // ── Files ──────────────────────────────────────────────────────────────────
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.exclude": {
+    "node_modules": true,
+    "dist": true,
+    "coverage": true,
+    ".nyc_output": true
+  },
+
+  // ── Search ──────────────────────────────────────────────────────────────────
+  "search.exclude": {
+    "node_modules": true,
+    "dist": true,
+    "coverage": true,
+    "*.lock": true
+  },
+
+  // ── Testing ───────────────────────────────────────────────────────────────
+  "jest.jestCommandLine": "npm test --",
+  "jest.autoRun": "off",
+
+  // ── Git ────────────────────────────────────────────────────────────────────
+  "git.autofetch": true,
+  "git.confirmSync": false,
+
+  // ── Security: never show secrets in output ─────────────────────────────────
+  "terminal.integrated.env.linux": {},
+  "terminal.integrated.env.osx": {},
+  "terminal.integrated.env.windows": {}
+}

@@ -1,0 +1,35 @@
+{
+  // Recommended extensions for this project.
+  // VS Code will prompt to install these when opening the workspace.
+  "recommendations": [
+    // ── Language support ───────────────────────────────────────────────────
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next",
+
+    // ── Testing ────────────────────────────────────────────────────────────
+    "orta.vscode-jest",
+    "ms-playwright.playwright",
+
+    // ── Git & GitHub ───────────────────────────────────────────────────────
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+    "github.copilot",
+    "github.copilot-chat",
+
+    // ── Productivity ───────────────────────────────────────────────────────
+    "streetsidesoftware.code-spell-checker",
+    "gruntfuggly.todo-tree",
+    "usernamehw.errorlens",
+    "aaron-bond.better-comments",
+
+    // ── Database ───────────────────────────────────────────────────────────
+    "mtxr.sqltools",
+
+    // ── Containers ─────────────────────────────────────────────────────────
+    "ms-azuretools.vscode-docker",
+
+    // ── Security ───────────────────────────────────────────────────────────
+    "snyk-security.snyk-vulnerability-scanner"
+  ]
+}

@@ -1,0 +1,18 @@
+# =============================================================================
+# CODEOWNERS
+# =============================================================================
+# Each line is a file pattern followed by one or more owners.
+# Owners are automatically requested for review on matching PRs.
+# More info: https://docs.github.com/articles/about-code-owners
+# =============================================================================
+
+# Global fallback — replace with your team / GitHub username
+*                   @your-org/core-team
+
+# Infrastructure and CI
+.github/            @your-org/platform-team
+scripts/            @your-org/platform-team
+
+# Security-sensitive areas require security team review
+.env.example        @your-org/security-team
+.github/workflows/  @your-org/security-team
