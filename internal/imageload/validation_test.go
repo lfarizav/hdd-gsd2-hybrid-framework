@@ -1,3 +1,4 @@
+package imageload
 package imageload_test
 
 import (

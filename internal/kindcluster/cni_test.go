@@ -1,3 +1,4 @@
+package kindcluster
 package kindcluster_test
 
 import (
