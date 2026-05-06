@@ -197,9 +197,9 @@ step "── Step 1: Create project directory ───────────�
 mkdir -p "$PROJECT_DIR/scripts"
 success "Created: $PROJECT_DIR"
 
-# Copy scaffold scripts into the new project's scripts/ directory so the new
-# project is self-contained (developers can re-run scaffolding without this
-# framework repo).
+# Copy scaffold scripts into the new project's scripts/ directory for execution.
+# These are temporary — they will be deleted after setup (Step 5b).
+# They're not part of the new project; they're framework infrastructure.
 cp "$SCRIPT_DIR/scaffold-project.sh"         "$PROJECT_DIR/scripts/"
 cp "$SCRIPT_DIR/scaffold-hybrid-framework.sh" "$PROJECT_DIR/scripts/"
 chmod +x "$PROJECT_DIR/scripts/scaffold-project.sh"
@@ -391,6 +391,26 @@ Design principle: arXiv:2602.11988 — minimal, non-redundant AGENTS.md"
 )
 
 # =============================================================================
+# STEP 5b — CLEAN UP SCAFFOLD SCRIPTS
+# =============================================================================
+# The scaffold scripts were only needed to create the project. They don't
+# belong in the new project's repository — that's framework infrastructure,
+# not project code. Delete them and commit the cleanup.
+step "── Step 5b: Clean up scaffold scripts ────────────────────────────────────"
+
+if [[ -f "$PROJECT_DIR/scripts/scaffold-project.sh" || -f "$PROJECT_DIR/scripts/scaffold-hybrid-framework.sh" ]]; then
+  (
+    cd "$PROJECT_DIR"
+    rm -f scripts/scaffold-project.sh scripts/scaffold-hybrid-framework.sh
+    git add -A
+    if ! git diff --cached --quiet; then
+      git commit --no-verify --message "chore: remove scaffold scripts (framework infrastructure, not project code)"
+      success "Removed scaffold scripts and committed cleanup"
+    fi
+  )
+fi
+
+# =============================================================================
 # STEP 6 — CREATE GITHUB REPOSITORY
 # =============================================================================
 step "── Step 6: Create GitHub repository ────────────────────────────────────"
@@ -468,12 +488,12 @@ if [[ -n "$GITHUB_OWNER" && "$CREATE_GITHUB_REPO" == true && "$GH_AVAILABLE" == 
 fi
 echo
 echo -e "${BOLD}What was created:${RESET}"
-echo -e "  ├── ${CYAN}Base VS Code project${RESET} (scaffold-project.sh)"
+echo -e "  ├── ${CYAN}Base VS Code project${RESET}"
 echo -e "  │     AGENTS.md, .vscode/, .github/, src/, tests/, docs/"
 echo -e "  │     package.json, tsconfig.json, jest.config.js, eslint.config.js"
 echo -e "  │     CI/CD workflows, pre-commit hook, .env.example"
 echo -e "  │"
-echo -e "  └── ${BLUE}Hybrid Framework${RESET} (scaffold-hybrid-framework.sh)"
+echo -e "  └── ${BLUE}Hybrid Framework (Spec-Kit + GSD-v1 + GSD-2)${RESET}"
 echo -e "        specs/constitution.md  ← FILL THIS IN FIRST"
 echo -e "        specs/requirements.md  ← then write requirements"
 echo -e "        specs/quality-gates.md"
@@ -500,10 +520,5 @@ echo
 echo -e "  ${CYAN}5. Write requirements${RESET}"
 echo -e "     # Open specs/requirements.md and write Gherkin acceptance criteria"
 echo
-if [[ "$INSTALL_CLIS" == false ]]; then
-  echo -e "  ${CYAN}6. (Optional) Install Spec-Kit + GSD-2 CLIs${RESET}"
-  echo -e "     cd $PROJECT_DIR && bash scripts/scaffold-hybrid-framework.sh --install-clis"
-  echo
-fi
-echo -e "  See ${BOLD}docs/GETTING_STARTED.md${RESET} in this framework repo for the full workflow."
+echo -e "  See ${BOLD}docs/GETTING_STARTED.md${RESET} for the hybrid framework workflow."
 echo
