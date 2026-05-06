@@ -95,12 +95,47 @@ make_dir() {
   fi
 }
 
-# Resolve the repo root to the directory that contains this script's parent.
+# Resolve the target project directory.
+# If PROJECT_DIR is set (called from create-new-project.sh), use it directly.
+# Otherwise, ask the user interactively.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [[ -z "${PROJECT_DIR:-}" ]]; then
+  echo
+  printf "  Where should the project be created? (default: $HOME/my-project) > "
+  read -r PROJECT_DIR </dev/tty
+  PROJECT_DIR="${PROJECT_DIR/#\~/$HOME}"         # expand leading ~
+  PROJECT_DIR="${PROJECT_DIR:-$HOME/my-project}" # default to $HOME/my-project if empty
+  mkdir -p "$PROJECT_DIR"
+fi
+ROOT_DIR="$PROJECT_DIR"
 
 cd "$ROOT_DIR"
 info "Working in: $ROOT_DIR"
+
+# ── Language / framework detection ────────────────────────────────────────────
+# If PROJECT_LANG is exported by the orchestrator (create-new-project.sh), use
+# it. Otherwise prompt interactively so the script works standalone.
+if [[ -z "${PROJECT_LANG:-}" ]]; then
+  echo
+  echo -e "  Select primary language / framework:"
+  echo -e "    ${BOLD}1)${RESET} typescript  — Node.js + Jest + ts-jest        [default]"
+  echo -e "    ${BOLD}2)${RESET} go          — Go modules + go test + testify"
+  echo -e "    ${BOLD}3)${RESET} ruby        — Bundler + RSpec + RuboCop"
+  echo -e "    ${BOLD}4)${RESET} c           — Make + Unity + cppcheck + valgrind"
+  echo -e "    ${BOLD}5)${RESET} python      — uv + pytest + mypy + ruff"
+  printf "  Choice [1-5] or language name [default: typescript]: "
+  read -r _lang_choice </dev/tty
+  case "${_lang_choice:-1}" in
+    1|typescript|ts) PROJECT_LANG="typescript" ;;
+    2|go|golang)     PROJECT_LANG="go" ;;
+    3|ruby|rb)       PROJECT_LANG="ruby" ;;
+    4|c)             PROJECT_LANG="c" ;;
+    5|python|py)     PROJECT_LANG="python" ;;
+    "")              PROJECT_LANG="typescript" ;;
+    *)               warn "Unknown '${_lang_choice}', defaulting to typescript"; PROJECT_LANG="typescript" ;;
+  esac
+fi
+info "Language: $PROJECT_LANG"
 
 # =============================================================================
 # 1. INITIALISE GIT
@@ -121,18 +156,46 @@ fi
 echo
 echo -e "${BOLD}── 2. Directory layout ───────────────────────────────────────────────────${RESET}"
 
-# Source directories
-make_dir src/api
-make_dir src/db/migrations
-make_dir src/lib
-make_dir src/middleware
-make_dir src/services
-make_dir src/types
-
-# Test directories  (unit / integration / e2e mirrors the test pyramid)
-make_dir tests/unit
-make_dir tests/integration
-make_dir tests/e2e
+# Language-specific source directories
+case "$PROJECT_LANG" in
+  go)
+    make_dir cmd
+    make_dir internal
+    make_dir pkg
+    make_dir tests/integration
+    make_dir tests/e2e
+    ;;
+  ruby)
+    make_dir lib
+    make_dir bin
+    make_dir spec/unit
+    make_dir spec/integration
+    ;;
+  c)
+    make_dir src
+    make_dir include
+    make_dir tests/unit
+    make_dir tests/integration
+    ;;
+  python)
+    _PY_PKG="${PROJECT_NAME:-myapp}"
+    _PY_PKG="${_PY_PKG//-/_}"   # hyphens → underscores (PEP 8)
+    make_dir "src/${_PY_PKG}"
+    make_dir tests/unit
+    make_dir tests/integration
+    ;;
+  *)  # typescript (default)
+    make_dir src/api
+    make_dir src/db/migrations
+    make_dir src/lib
+    make_dir src/middleware
+    make_dir src/services
+    make_dir src/types
+    make_dir tests/unit
+    make_dir tests/integration
+    make_dir tests/e2e
+    ;;
+esac
 
 # Documentation for humans (agents use AGENTS.md, not this folder)
 make_dir docs
@@ -153,6 +216,8 @@ make_dir .github/workflows
 make_dir .github/agents
 make_dir .github/prompts
 make_dir .github/hooks
+make_dir .github/instructions
+make_dir .github/skills
 
 # =============================================================================
 # 3. AGENTS.md
@@ -165,7 +230,471 @@ make_dir .github/hooks
 echo
 echo -e "${BOLD}── 3. AGENTS.md ──────────────────────────────────────────────────────────${RESET}"
 
-write_file "AGENTS.md" <<'AGENTS_EOF'
+case "$PROJECT_LANG" in
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GO
+# ─────────────────────────────────────────────────────────────────────────────
+go)
+  write_file "AGENTS.md" <<'GO_AGENTS_EOF'
+# AGENTS.md
+
+> **Design note (arXiv:2602.11988 — Gloaguen et al.):** This file intentionally
+> contains only *minimal*, non-redundant requirements. Excessive instructions
+> reduce agent task-success rates and inflate LLM cost by >20 %.
+
+---
+
+## Commands
+
+```bash
+# Build all packages
+go build ./...
+
+# Run all tests
+go test ./...
+
+# Run tests with coverage (threshold: 80 %)
+go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
+
+# Run a single test
+go test -run TestFunctionName ./path/to/package
+
+# Format (required before every commit)
+gofmt -w ./...
+
+# Vet
+go vet ./...
+
+# Tidy module graph
+go mod tidy
+```
+
+---
+
+## Testing
+
+- **Framework:** `go test` (stdlib) + `testify` for assertions
+- Test files live alongside source: `foo.go` → `foo_test.go`
+- Integration tests live in `tests/integration/`
+- All tests **must pass** before a PR is merged; CI enforces this.
+- Add or update tests for every code change, even when not explicitly requested.
+- Never remove a failing test; fix it or open a follow-up issue.
+- Coverage threshold: **80 %** (statements).
+
+---
+
+## Code style
+
+- **Language:** Go 1.22+
+- Tabs for indentation, enforced by `gofmt` / `goimports`
+- Explicit error returns; no `panic` in library code
+- Descriptive names over comments — `fetchUserByID` beats `getUser` + a comment
+
+```go
+// ✅ Good
+func fetchUserByID(id string) (*User, error) {
+	if id == "" {
+		return nil, errors.New("user ID is required")
+	}
+	return db.FindUser(id)
+}
+
+// ❌ Bad — vague name, swallowed error, empty interface
+func getUser(id interface{}) interface{} {
+	u, _ := db.FindUser(fmt.Sprint(id))
+	return u
+}
+```
+
+---
+
+## Git workflow
+
+- Branch naming: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`, `docs/<slug>`
+- PR titles follow [Conventional Commits](https://www.conventionalcommits.org/):
+  `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`
+- Squash-merge into `main`; keep a clean linear history
+- **Never force-push to `main`**
+
+---
+
+## Boundaries
+
+| ✅ Always | ⚠️ Ask first | 🚫 Never |
+|-----------|--------------|---------|
+| Write to `internal/`, `cmd/`, `tests/`, `docs/`, `specs/` | Add a new Go module dependency | Commit `.env` or any secret |
+| Run `go test ./...` before marking a task done | Modify CI/CD workflows | Edit `vendor/` or build outputs |
+| Run `gofmt -w ./...` after edits | Refactor across many files at once | Remove or skip failing tests |
+| Run `go vet ./...` after edits | Change the database schema | Modify `go.sum` by hand |
+| Code with solid reasons, facts, evidences, or researches | Ask before doing if you are unsure | Guess |
+
+---
+
+## Environment variables
+
+All required env vars are documented in `.env.example`.
+Copy it to `.env` (never commit `.env`) and populate real values locally.
+Use a secrets manager (e.g. AWS Secrets Manager, Vault) in production.
+
+---
+
+## Security considerations
+
+- No secrets in source code or commit messages (pre-commit hook enforces this)
+- Validate and sanitise all external input at system boundaries
+- Use parameterised queries — never interpolate user input into SQL
+- OWASP Top 10 is the baseline; flag security concerns in PR descriptions
+GO_AGENTS_EOF
+  ;;
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RUBY
+# ─────────────────────────────────────────────────────────────────────────────
+ruby)
+  write_file "AGENTS.md" <<'RUBY_AGENTS_EOF'
+# AGENTS.md
+
+> **Design note (arXiv:2602.11988 — Gloaguen et al.):** This file intentionally
+> contains only *minimal*, non-redundant requirements. Excessive instructions
+> reduce agent task-success rates and inflate LLM cost by >20 %.
+
+---
+
+## Commands
+
+```bash
+# Install gems
+bundle install
+
+# Run all tests
+bundle exec rspec
+
+# Run a single spec file
+bundle exec rspec spec/unit/logger_spec.rb
+
+# Run tests with coverage
+COVERAGE=true bundle exec rspec
+
+# Lint (report only)
+bundle exec rubocop
+
+# Lint with auto-fix
+bundle exec rubocop -a
+```
+
+---
+
+## Testing
+
+- **Framework:** RSpec 3 + SimpleCov
+- Specs live in `spec/unit/` and `spec/integration/`
+- All tests **must pass** before a PR is merged; CI enforces this.
+- Add or update tests for every code change, even when not explicitly requested.
+- Never remove a failing test; fix it or open a follow-up issue.
+- Coverage threshold: **80 %**. Run `COVERAGE=true bundle exec rspec`.
+
+---
+
+## Code style
+
+- **Language:** Ruby 3.3+
+- 2-space indentation, `snake_case` methods and variables
+- Add `# frozen_string_literal: true` at the top of every Ruby file
+- Prefer explicit returns; avoid `method_missing`
+- Descriptive names — `find_user_by_email` beats `get_user`
+
+```ruby
+# ✅ Good
+# frozen_string_literal: true
+
+def find_user_by_email(email)
+  raise ArgumentError, "email is required" if email.nil? || email.empty?
+  User.find_by!(email: email)
+end
+
+# ❌ Bad — no guard, no frozen literal, vague name
+def get(u)
+  User.find_by(email: u)
+end
+```
+
+---
+
+## Git workflow
+
+- Branch naming: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`, `docs/<slug>`
+- PR titles follow [Conventional Commits](https://www.conventionalcommits.org/):
+  `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`
+- Squash-merge into `main`; keep a clean linear history
+- **Never force-push to `main`**
+
+---
+
+## Boundaries
+
+| ✅ Always | ⚠️ Ask first | 🚫 Never |
+|-----------|--------------|---------|
+| Write to `lib/`, `spec/`, `docs/`, `specs/` | Add a new gem dependency | Commit `.env` or any secret |
+| Run `bundle exec rspec` before marking a task done | Modify CI/CD workflows | Edit `vendor/` |
+| Run `bundle exec rubocop` after edits | Refactor across many files at once | Remove or skip failing tests |
+| Add `# frozen_string_literal: true` to new files | Change the database schema | Modify `Gemfile.lock` by hand |
+| Code with solid reasons, facts, evidences, or researches | Ask before doing if you are unsure | Guess |
+
+---
+
+## Environment variables
+
+All required env vars are documented in `.env.example`.
+Copy it to `.env` (never commit `.env`) and populate real values locally.
+
+---
+
+## Security considerations
+
+- No secrets in source code or commit messages (pre-commit hook enforces this)
+- Validate and sanitise all external input at system boundaries
+- Use parameterised queries — never string-interpolate user input into SQL
+- OWASP Top 10 is the baseline; flag security concerns in PR descriptions
+RUBY_AGENTS_EOF
+  ;;
+
+# ─────────────────────────────────────────────────────────────────────────────
+# C
+# ─────────────────────────────────────────────────────────────────────────────
+c)
+  write_file "AGENTS.md" <<'C_AGENTS_EOF'
+# AGENTS.md
+
+> **Design note (arXiv:2602.11988 — Gloaguen et al.):** This file intentionally
+> contains only *minimal*, non-redundant requirements. Excessive instructions
+> reduce agent task-success rates and inflate LLM cost by >20 %.
+
+---
+
+## Commands
+
+```bash
+# Build (debug)
+make
+
+# Build (release)
+make CFLAGS="-O2 -DNDEBUG"
+
+# Run tests
+make test
+
+# Check for memory leaks
+valgrind --leak-check=full --error-exitcode=1 ./tests/test_suite
+
+# Static analysis
+cppcheck --enable=all --error-exitcode=1 src/ include/
+
+# Format (requires clang-format)
+clang-format -i src/**/*.c include/**/*.h
+
+# Generate coverage report (requires gcc + lcov)
+make coverage
+```
+
+---
+
+## Testing
+
+- **Framework:** Unity test runner (or CMocka), orchestrated via `make test`
+- Unit tests live in `tests/unit/`, integration tests in `tests/integration/`
+- All tests **must pass** before a PR is merged; CI enforces this.
+- Add or update tests for every code change, even when not explicitly requested.
+- Never remove a failing test; fix it or open a follow-up issue.
+- Coverage threshold: **80 %** (gcov/lcov). Run `make coverage`.
+
+---
+
+## Code style
+
+- **Standard:** C11 (`-std=c11`)
+- 4-space indentation, `snake_case` names
+- Always check return values of functions that can fail
+- Guard every header: `#ifndef MY_HEADER_H` / `#define` / `#endif`
+- No implicit function declarations (`-Wimplicit-function-declaration` is an error)
+- Keep functions short and single-purpose; max ~50 lines
+
+```c
+// ✅ Good
+int read_config(const char *path, Config *out) {
+    if (!path || !out) return -EINVAL;
+    FILE *f = fopen(path, "r");
+    if (!f) return -errno;
+    /* ... parse ... */
+    fclose(f);
+    return 0;
+}
+
+// ❌ Bad — no null check, return value ignored
+void read_cfg(char *p, Config *c) {
+    FILE *f = fopen(p, "r");
+    parse(f, c);
+}
+```
+
+---
+
+## Git workflow
+
+- Branch naming: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`, `docs/<slug>`
+- PR titles follow [Conventional Commits](https://www.conventionalcommits.org/):
+  `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`
+- Squash-merge into `main`; keep a clean linear history
+- **Never force-push to `main`**
+
+---
+
+## Boundaries
+
+| ✅ Always | ⚠️ Ask first | 🚫 Never |
+|-----------|--------------|---------|
+| Write to `src/`, `include/`, `tests/`, `docs/`, `specs/` | Add an external library dependency | Commit `.env` or any secret |
+| Run `make test` before marking a task done | Modify CI/CD workflows | Remove or skip failing tests |
+| Run `cppcheck` and `valgrind` after edits | Refactor across many files at once | Edit build artefacts |
+| Use `snprintf` / bounds-checked string ops — never `gets()` | Change the build system | Use `sprintf` or `gets()` |
+| Code with solid reasons, facts, evidences, or researches | Ask before doing if you are unsure | Guess |
+
+---
+
+## Environment variables
+
+All required env vars are documented in `.env.example`.
+Copy it to `.env` (never commit `.env`) and populate real values locally.
+
+---
+
+## Security considerations
+
+- No secrets in source code or commit messages (pre-commit hook enforces this)
+- Validate all external input length and content before use (OWASP A03: Injection)
+- Use `snprintf` not `sprintf`; bounds-check all string operations
+- Avoid `gets()`, `scanf("%s")`, `strcpy()` — all are unsafe
+- OWASP Top 10 is the baseline; flag security concerns in PR descriptions
+C_AGENTS_EOF
+  ;;
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PYTHON
+# ─────────────────────────────────────────────────────────────────────────────
+python)
+  write_file "AGENTS.md" <<'PY_AGENTS_EOF'
+# AGENTS.md
+
+> **Design note (arXiv:2602.11988 — Gloaguen et al.):** This file intentionally
+> contains only *minimal*, non-redundant requirements. Excessive instructions
+> reduce agent task-success rates and inflate LLM cost by >20 %.
+
+---
+
+## Commands
+
+```bash
+# Install dependencies (uv)
+uv sync --all-extras
+
+# Run all tests
+uv run pytest
+
+# Run tests with coverage (threshold: 80 %)
+uv run pytest --cov=src --cov-report=term-missing
+
+# Run a single test
+uv run pytest tests/unit/test_logger.py -v
+
+# Type-check
+uv run mypy src/
+
+# Lint (report)
+uv run ruff check .
+
+# Lint + format auto-fix
+uv run ruff check --fix . && uv run ruff format .
+```
+
+---
+
+## Testing
+
+- **Framework:** pytest 8+ with pytest-cov
+- Tests live in `tests/unit/` and `tests/integration/`
+- All tests **must pass** before a PR is merged; CI enforces this.
+- Add or update tests for every code change, even when not explicitly requested.
+- Never remove a failing test; fix it or open a follow-up issue.
+- Coverage threshold: **80 %** (statements). Run `uv run pytest --cov=src`.
+
+---
+
+## Code style
+
+- **Language:** Python 3.12+
+- Type hints required on all functions (enforced by mypy strict)
+- `snake_case` for variables and functions, `PascalCase` for classes
+- Format with `ruff format` (Black-compatible, 88-char line length)
+- Prefer explicit over implicit; avoid `*` imports
+
+```python
+# ✅ Good
+def fetch_user_by_id(user_id: str) -> User:
+    if not user_id:
+        raise ValueError("user_id is required")
+    return db.users.get(user_id)
+
+# ❌ Bad — missing type hints, no guard, vague name
+def get(id):
+    return db.users.get(id)
+```
+
+---
+
+## Git workflow
+
+- Branch naming: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`, `docs/<slug>`
+- PR titles follow [Conventional Commits](https://www.conventionalcommits.org/):
+  `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`
+- Squash-merge into `main`; keep a clean linear history
+- **Never force-push to `main`**
+
+---
+
+## Boundaries
+
+| ✅ Always | ⚠️ Ask first | 🚫 Never |
+|-----------|--------------|---------|
+| Write to `src/`, `tests/`, `docs/`, `specs/` | Add a new package dependency | Commit `.env` or any secret |
+| Run `uv run pytest` before marking a task done | Modify CI/CD workflows | Remove or skip failing tests |
+| Run `uv run ruff check .` after edits | Refactor across many files at once | Edit `.venv/` or build outputs |
+| Add type hints to all new functions | Change the database schema | Modify `uv.lock` by hand |
+| Code with solid reasons, facts, evidences, or researches | Ask before doing if you are unsure | Guess |
+
+---
+
+## Environment variables
+
+All required env vars are documented in `.env.example`.
+Copy it to `.env` (never commit `.env`) and populate real values locally.
+Use a secrets manager (e.g. AWS Secrets Manager, Vault) in production.
+
+---
+
+## Security considerations
+
+- No secrets in source code or commit messages (pre-commit hook enforces this)
+- Validate and sanitise all external input at system boundaries
+- Use parameterised queries (SQLAlchemy ORM / `?` placeholders) — never f-string SQL
+- OWASP Top 10 is the baseline; flag security concerns in PR descriptions
+PY_AGENTS_EOF
+  ;;
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TYPESCRIPT (default)
+# ─────────────────────────────────────────────────────────────────────────────
+*)
+  write_file "AGENTS.md" <<'TS_AGENTS_EOF'
 # AGENTS.md
 
 > **Design note (arXiv:2602.11988 — Gloaguen et al.):** This file intentionally
@@ -256,6 +785,7 @@ async function getUser(id) {
 | Run `npm test` before marking a task done | Modify CI/CD workflows | Edit `node_modules/` or `dist/` |
 | Follow naming conventions above | Refactor across many files at once | Remove or skip failing tests |
 | Use `npm run lint --fix` after edits | Change the database schema | Modify `package-lock.json` by hand |
+| Code with solid reasons, facts, evidences, or researches | Ask before doing if you are unsure | Guess |
 
 ---
 
@@ -273,7 +803,9 @@ Use a secrets manager (e.g. AWS Secrets Manager, Vault) in production.
 - Validate and sanitise all external input at system boundaries
 - Use parameterised queries — never interpolate user input into SQL
 - OWASP Top 10 is the baseline; flag security concerns in PR descriptions
-AGENTS_EOF
+TS_AGENTS_EOF
+  ;;
+esac
 
 # =============================================================================
 # 4. .github/copilot-instructions.md  (symlink → AGENTS.md)
@@ -465,9 +997,66 @@ tmp/
 temp/
 GITIGNORE_EOF
 
-# =============================================================================
-# 6. .env.example
-# =============================================================================
+# Append language-specific .gitignore patterns
+case "$PROJECT_LANG" in
+  go)
+    cat >> .gitignore <<'GO_GITIGNORE_EOF'
+
+# ── Go ────────────────────────────────────────────────────────────────────────
+/app
+/tests/test_suite
+coverage.out
+*.test
+vendor/
+GO_GITIGNORE_EOF
+    ;;
+  ruby)
+    cat >> .gitignore <<'RUBY_GITIGNORE_EOF'
+
+# ── Ruby ──────────────────────────────────────────────────────────────────────
+/.bundle/
+/vendor/bundle/
+/coverage/
+.rspec_status
+*.gem
+Gemfile.lock
+RUBY_GITIGNORE_EOF
+    ;;
+  c)
+    cat >> .gitignore <<'C_GITIGNORE_EOF'
+
+# ── C ────────────────────────────────────────────────────────────────────────
+/app
+/tests/test_suite
+*.o
+*.a
+*.so
+*.gcda
+*.gcno
+*.gcov
+coverage.info
+/coverage-report/
+C_GITIGNORE_EOF
+    ;;
+  python)
+    cat >> .gitignore <<'PY_GITIGNORE_EOF'
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+PY_GITIGNORE_EOF
+    ;;
+esac
 # Documents the expected shape of .env without revealing real values.
 # OWASP A02: never store credentials in source control.
 # =============================================================================
@@ -623,7 +1212,261 @@ CFG_EOF
 echo
 echo -e "${BOLD}── 9. GitHub Actions workflows ───────────────────────────────────────────${RESET}"
 
-write_file ".github/workflows/ci.yml" <<'CI_EOF'
+case "$PROJECT_LANG" in
+  go)
+    write_file ".github/workflows/ci.yml" <<'GO_CI_EOF'
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+      - name: Vet
+        run: go vet ./...
+      - name: Format check
+        run: |
+          out=$(gofmt -l .)
+          [ -z "$out" ] || (echo "Unformatted files:$out" && exit 1)
+      - name: Test
+        run: go test -coverprofile=coverage.out ./...
+      - name: Coverage
+        run: go tool cover -func=coverage.out
+GO_CI_EOF
+    write_file ".github/workflows/security.yml" <<'GO_SEC_EOF'
+name: Security
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  govulncheck:
+    name: govulncheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: govulncheck ./...
+  secret-scan:
+    name: Secret scanning (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+GO_SEC_EOF
+    ;;
+  ruby)
+    write_file ".github/workflows/ci.yml" <<'RUBY_CI_EOF'
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - name: Lint
+        run: bundle exec rubocop
+      - name: Test
+        run: COVERAGE=true bundle exec rspec
+RUBY_CI_EOF
+    write_file ".github/workflows/security.yml" <<'RUBY_SEC_EOF'
+name: Security
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bundle-audit:
+    name: bundle-audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - run: gem install bundler-audit
+      - run: bundle-audit check --update
+  secret-scan:
+    name: Secret scanning (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+RUBY_SEC_EOF
+    ;;
+  c)
+    write_file ".github/workflows/ci.yml" <<'C_CI_EOF'
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y gcc make valgrind cppcheck lcov
+      - name: Build
+        run: make
+      - name: Test
+        run: make test
+      - name: Memory check
+        run: valgrind --leak-check=full --error-exitcode=1 ./tests/test_suite
+      - name: Static analysis
+        run: cppcheck --enable=all --error-exitcode=1 src/ include/
+C_CI_EOF
+    write_file ".github/workflows/security.yml" <<'C_SEC_EOF'
+name: Security
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: c-cpp
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
+  secret-scan:
+    name: Secret scanning (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+C_SEC_EOF
+    ;;
+  python)
+    write_file ".github/workflows/ci.yml" <<'PY_CI_EOF'
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install uv
+        run: pip install uv
+      - name: Install dependencies
+        run: uv sync --all-extras
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format check
+        run: uv run ruff format --check .
+      - name: Type-check
+        run: uv run mypy src/
+      - name: Test
+        run: uv run pytest --cov=src --cov-report=term-missing
+PY_CI_EOF
+    write_file ".github/workflows/security.yml" <<'PY_SEC_EOF'
+name: Security
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  pip-audit:
+    name: pip-audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install uv pip-audit
+      - run: uv export --format requirements-txt | pip-audit -r /dev/stdin
+  secret-scan:
+    name: Secret scanning (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+PY_SEC_EOF
+    ;;
+  *)  # typescript
+    write_file ".github/workflows/ci.yml" <<'TS_CI_EOF'
 # =============================================================================
 # CI — runs on every push and pull request
 # =============================================================================
@@ -671,9 +1514,9 @@ jobs:
         if: always()
         with:
           fail_ci_if_error: false
-CI_EOF
+TS_CI_EOF
 
-write_file ".github/workflows/security.yml" <<'SEC_EOF'
+    write_file ".github/workflows/security.yml" <<'TS_SEC_EOF'
 # =============================================================================
 # Security scanning — runs weekly and on every push to main
 # =============================================================================
@@ -724,7 +1567,9 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-SEC_EOF
+TS_SEC_EOF
+    ;;
+esac
 
 # =============================================================================
 # 10. .github/CODEOWNERS
@@ -801,6 +1646,11 @@ LEAKED=false
 # Check for patterns in staged files
 while IFS= read -r file; do
   [[ -z "$file" ]] && continue
+  # Skip scaffold/template scripts — they intentionally define example patterns
+  [[ "$file" == scripts/scaffold-*.sh ]] && continue
+  [[ "$file" == scripts/create-*.sh ]] && continue
+  # Skip the hook definition itself — it contains the pattern list
+  [[ "$file" == .github/hooks/pre-commit ]] && continue
   for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
     if git show ":$file" 2>/dev/null | grep -qi "$pattern"; then
       echo -e "${RED}✗ Secret pattern detected in $file: $pattern${RESET}"
@@ -842,284 +1692,382 @@ if [[ -d ".git/hooks" ]]; then
 fi
 
 # =============================================================================
-# 4d. .github/prompts/  — custom agent prompt templates
+# 4d. .github/instructions/  — file-based VS Code Copilot instructions
+# =============================================================================
+# VS Code reads *.instructions.md files with applyTo: frontmatter to
+# automatically apply coding standards to matching files.
+# Reference: https://code.visualstudio.com/docs/copilot/copilot-customization
 # =============================================================================
 echo
-echo -e "${BOLD}── 4d. Agent prompt templates ─────────────────────────────────────────────${RESET}"
+echo -e "${BOLD}── 4d. .github/instructions/ (file-based instructions) ───────────────────${RESET}"
 
-write_file ".github/prompts/README.md" <<'PROMPTS_EOF'
-# Custom Agent Prompts
+make_dir .github/instructions
 
-This directory contains reusable prompt templates for common agent workflows.
-Reference these when creating new `.github/agents/*.md` files or asking agents to perform specific tasks.
+write_file ".github/instructions/general.instructions.md" <<'GENERAL_INS_EOF'
+---
+applyTo: "**"
+---
+# General coding standards
 
-## Usage
+- Read AGENTS.md at repo root — it is the authoritative guide for this project
+- Write explicit error returns; never swallow errors silently
+- Validate and sanitize all external input at system boundaries (OWASP A01–A03)
+- Use parameterized queries — never interpolate user input into SQL
+- No secrets, tokens, or credentials in source code or commit messages
+- Every code change must include or update the relevant tests
+- Never remove or skip a failing test — fix it or open a follow-up issue
+GENERAL_INS_EOF
 
-### Option 1: Direct reference in agent files
-```markdown
-See `.github/prompts/code-review.md` for how to structure code reviews.
-```
+# Language-specific variables for instructions, skills, agents, prompts, and hooks
+case "$PROJECT_LANG" in
+  go)
+    _LANG_DISPLAY="Go"
+    _LANG_GLOB='**/*.go'
+    _LANG_TEST_CMD="go test ./..."
+    _LANG_LINT_CMD="golangci-lint run"
+    _LANG_BUILD_CMD="go build ./..."
+    _LANG_FORMAT_CMD="gofmt -w ."
+    _LANG_INDENT="Tabs (enforced by gofmt)"
+    _LANG_EXTRA="- Explicit error returns; no \`panic\` in library code\n- Follow Go naming conventions (PascalCase for exported, camelCase for unexported)\n- Use \`errors.New\` or \`fmt.Errorf\` for error creation"
+    ;;
+  ruby)
+    _LANG_DISPLAY="Ruby"
+    _LANG_GLOB='**/*.rb'
+    _LANG_TEST_CMD="bundle exec rspec"
+    _LANG_LINT_CMD="bundle exec rubocop"
+    _LANG_BUILD_CMD="bundle install"
+    _LANG_FORMAT_CMD="bundle exec rubocop --auto-correct"
+    _LANG_INDENT="2 spaces (enforced by RuboCop)"
+    _LANG_EXTRA="- Follow the Ruby Style Guide\n- Prefer symbols over strings for hash keys\n- Use frozen string literals: # frozen_string_literal: true"
+    ;;
+  c)
+    _LANG_DISPLAY="C"
+    _LANG_GLOB='**/*.{c,h}'
+    _LANG_TEST_CMD="make test"
+    _LANG_LINT_CMD="cppcheck --enable=all ."
+    _LANG_BUILD_CMD="make"
+    _LANG_FORMAT_CMD="clang-format -i src/*.c include/*.h"
+    _LANG_INDENT="4 spaces"
+    _LANG_EXTRA="- Check all malloc/calloc return values; free all heap allocations\n- Avoid undefined behavior (use -fsanitize=address,undefined)\n- Never use gets(); use fgets() or getline()"
+    ;;
+  python)
+    _LANG_DISPLAY="Python"
+    _LANG_GLOB='**/*.py'
+    _LANG_TEST_CMD="uv run pytest"
+    _LANG_LINT_CMD="ruff check ."
+    _LANG_BUILD_CMD="uv sync"
+    _LANG_FORMAT_CMD="ruff format ."
+    _LANG_INDENT="4 spaces (PEP 8)"
+    _LANG_EXTRA="- Use type annotations on all functions\n- Prefer pathlib.Path over os.path\n- Use uv for dependency management, not pip directly"
+    ;;
+  *)  # typescript (default)
+    _LANG_DISPLAY="TypeScript"
+    _LANG_GLOB='**/*.{ts,tsx}'
+    _LANG_TEST_CMD="npm test"
+    _LANG_LINT_CMD="npm run lint"
+    _LANG_BUILD_CMD="npm run build"
+    _LANG_FORMAT_CMD="npm run format"
+    _LANG_INDENT="2 spaces"
+    _LANG_EXTRA="- Use strict TypeScript; no any type without justification\n- Prefer functional patterns and immutability\n- Use named exports; avoid default exports in library code"
+    ;;
+esac
 
-### Option 2: Inline in agent instructions
-Copy and adapt templates into your agent YAML frontmatter or `.github/agents/*.md`.
+write_file ".github/instructions/${PROJECT_LANG}.instructions.md" <<LANG_INS_EOF
+---
+applyTo: "${_LANG_GLOB}"
+---
+# ${_LANG_DISPLAY} coding standards
 
-## Available prompts
+## Indentation
+${_LANG_INDENT}
 
-- `code-review.md` — Guidelines for security and style review
-- `testing.md` — Test generation and coverage strategy
-- `documentation.md` — Auto-doc generation patterns
-PROMPTS_EOF
+## Commands
+- **Test:** \`${_LANG_TEST_CMD}\`
+- **Lint:** \`${_LANG_LINT_CMD}\`
+- **Build:** \`${_LANG_BUILD_CMD}\`
+- **Format:** \`${_LANG_FORMAT_CMD}\`
 
-write_file ".github/prompts/code-review.md" <<'CODEREVIEW_EOF'
-# Code Review Prompt
+## Rules
+$(echo -e "${_LANG_EXTRA}")
+LANG_INS_EOF
 
-When reviewing code:
+# =============================================================================
+# 4e. .github/skills/  — VS Code Copilot agent skills
+# =============================================================================
+# Skills provide reusable, domain-specific instructions invoked by agents.
+# Each skill lives in its own subdirectory containing a SKILL.md file.
+# Reference: https://code.visualstudio.com/docs/copilot/copilot-customization
+# =============================================================================
+echo
+echo -e "${BOLD}── 4e. .github/skills/ (agent skills) ───────────────────────────────────${RESET}"
 
-1. **Security first** — flag:
-   - Unvalidated user input (SQL injection, XSS)
-   - Hardcoded secrets or credentials
-   - Missing OWASP Top 10 controls
-   - Privilege escalation risks
+make_dir .github/skills/test-runner
 
-2. **Style & maintainability**:
-   - Follow the project's code-style rules in AGENTS.md
-   - Check naming conventions (camelCase, UPPER_SNAKE_CASE, etc.)
-   - Ensure test coverage (target: ≥80%)
-   - Flag overly complex functions (>10 lines → extract)
+write_file ".github/skills/test-runner/SKILL.md" <<SKILL_EOF
+---
+name: test-runner
+description: Run the test suite, interpret failures, and fix broken tests without removing them.
+---
+# Test runner
 
-3. **Completeness**:
-   - Tests pass and cover new code
-   - No console.log() or debug code left
-   - Error handling is explicit (don't swallow errors)
-   - Database changes include migrations (if applicable)
+## Instructions
+1. Run the full test suite: \`${_LANG_TEST_CMD}\`
+2. Read each failure message carefully before making changes
+3. Fix the root cause — never delete or skip a failing test
+4. Run tests again to confirm the fix; repeat until all tests pass
+5. If a test reveals a genuine bug in production code, fix the production code first
 
-4. **Performance**:
-   - No N+1 queries without explanation
-   - Caching strategy documented
-   - Large file operations handled efficiently
+## Definition of done
+All tests pass with exit code 0. Coverage does not decrease.
+SKILL_EOF
+
+# =============================================================================
+# 4f. .github/agents/  — VS Code custom agent persona files
+# =============================================================================
+# Agent files define custom modes in VS Code Copilot Chat.
+# VS Code detects *.agent.md files in .github/agents/.
+# Reference: https://code.visualstudio.com/docs/copilot/copilot-customization
+# =============================================================================
+echo
+echo -e "${BOLD}── 4f. .github/agents/ (custom agent personas) ─────────────────────────${RESET}"
+
+write_file ".github/agents/test-agent.agent.md" <<TESTAGENT_EOF
+---
+name: Test Agent
+description: Runs the test suite, interprets failures, and fixes broken tests. Never removes or skips tests.
+tools:
+  - editFiles
+  - runCommands
+  - search
+---
+# Test Agent
+
+You are a specialist in running and fixing tests for this ${_LANG_DISPLAY} project.
+
+## Workflow
+1. Run \`${_LANG_TEST_CMD}\` and capture all output
+2. Analyse each failure; identify root cause before touching code
+3. Fix production code or test helpers — **never** delete or comment out failing tests
+4. Re-run until exit code is 0
+5. Report: tests fixed, tests added, coverage change
+
+## Constraints
+- Do not skip, xfail, or comment-out any test
+- Maintain or improve coverage (threshold: 80 % statements)
+- Follow AGENTS.md at repo root for all style and tooling rules
+TESTAGENT_EOF
+
+write_file ".github/agents/lint-agent.agent.md" <<LINTAGENT_EOF
+---
+name: Lint Agent
+description: Runs the linter, fixes all reported issues, and enforces code style for this project.
+tools:
+  - editFiles
+  - runCommands
+---
+# Lint Agent
+
+You are a code-style enforcer for this ${_LANG_DISPLAY} project.
+
+## Workflow
+1. Run \`${_LANG_LINT_CMD}\` and capture all warnings/errors
+2. Fix each issue in the source files
+3. Run \`${_LANG_FORMAT_CMD}\` to apply automatic formatting
+4. Re-run the linter until it exits with code 0
+5. Run the test suite (\`${_LANG_TEST_CMD}\`) to confirm formatting did not break anything
+
+## Constraints
+- Do not disable lint rules unless absolutely necessary and justified with a comment
+- Do not change logic while fixing style issues
+- Follow AGENTS.md for project-specific style rules
+LINTAGENT_EOF
+
+write_file ".github/agents/docs-agent.agent.md" <<DOCSAGENT_EOF
+---
+name: Docs Agent
+description: Writes and updates project documentation, API references, and inline code comments.
+tools:
+  - editFiles
+  - search
+---
+# Docs Agent
+
+You are a technical writer for this ${_LANG_DISPLAY} project.
+
+## Workflow
+1. Identify what is undocumented or outdated (README, API docs, inline comments)
+2. Write clear, accurate documentation — verify claims against the actual code
+3. Update CHANGELOG.md for user-visible changes
+4. Ensure all public APIs are documented with usage examples
+
+## Constraints
+- Write for the target audience: developers using this project
+- Prefer examples over prose
+- Do not add misleading or unverified claims
+- Do not modify source code logic
+DOCSAGENT_EOF
+
+write_file ".github/agents/security-agent.agent.md" <<SECAGENT_EOF
+---
+name: Security Agent
+description: Reviews code for OWASP Top 10 vulnerabilities, validates input sanitization, and checks for secrets in code.
+tools:
+  - search
+  - editFiles
+---
+# Security Agent
+
+You are a security reviewer for this ${_LANG_DISPLAY} project.
+
+## Workflow
+1. Scan for OWASP Top 10 vulnerabilities (injection, broken auth, exposure, etc.)
+2. Check that all external input is validated and sanitized at system boundaries
+3. Verify no secrets, tokens, or credentials appear in source code or config
+4. Review parameterized queries — no raw string interpolation into SQL
+5. Report each finding with: severity, location, description, recommended fix
+
+## Constraints
+- Flag findings; do not silently patch security issues without explanation
+- Follow AGENTS.md security boundaries
+- Never commit secrets or credentials, even as examples
+SECAGENT_EOF
+
+# =============================================================================
+# 4g. .github/prompts/  — VS Code prompt files (slash commands)
+# =============================================================================
+# Prompt files with .prompt.md extension appear as slash commands in
+# VS Code Copilot Chat. Each file must have YAML frontmatter.
+# Reference: https://code.visualstudio.com/docs/copilot/copilot-customization
+# =============================================================================
+echo
+echo -e "${BOLD}── 4g. .github/prompts/ (prompt files / slash commands) ─────────────────${RESET}"
+
+write_file ".github/prompts/code-review.prompt.md" <<CODEREVIEW_EOF
+---
+description: Review staged or recent code changes for correctness, style, security, and test coverage.
+mode: agent
+tools:
+  - search
+  - editFiles
+---
+# Code Review
+
+Review the recent code changes in this ${_LANG_DISPLAY} project.
+
+## Checklist
+- [ ] Logic is correct and handles edge cases
+- [ ] OWASP Top 10 vulnerabilities are not introduced (especially injection, broken auth, exposure)
+- [ ] All external input is validated at system boundaries
+- [ ] No secrets or credentials are hard-coded
+- [ ] Tests cover the changed code paths (target: ≥ 80 % statement coverage)
+- [ ] Code style matches AGENTS.md conventions
+- [ ] Public APIs are documented
+- [ ] Error cases are handled explicitly — no swallowed errors
+
+## Output format
+List each issue with: severity (critical / high / medium / low), file:line, description, suggested fix.
 CODEREVIEW_EOF
 
-write_file ".github/prompts/testing.md" <<'TESTING_EOF'
-# Testing Prompt
+write_file ".github/prompts/testing.prompt.md" <<TESTING_PROMPT_EOF
+---
+description: Write or improve tests for the specified code, aiming for 80% statement coverage.
+mode: agent
+tools:
+  - editFiles
+  - runCommands
+  - search
+---
+# Testing
 
-When generating or improving tests:
+Add or improve tests for this ${_LANG_DISPLAY} project.
 
-1. **Unit tests** (`tests/unit/`):
-   - Test one function per describe block
-   - Cover happy path + at least 2 error cases
-   - Use descriptive test names: `should throw when email is missing`
-   - Mock external dependencies
+## Instructions
+1. Identify untested or under-tested code paths
+2. Write tests that cover: happy path, edge cases, error cases
+3. Run \`${_LANG_TEST_CMD}\` to confirm all tests pass
+4. Aim for ≥ 80 % statement coverage
+5. Never remove or skip existing tests
 
-2. **Integration tests** (`tests/integration/`):
-   - Test component interactions (e.g., API → DB)
-   - Use test fixtures or factories, not live data
-   - Clean up state after each test
-   - Document why integration tests exist
+## Constraints
+- Tests must be deterministic (no random sleeps, no flaky assertions)
+- Use the existing test framework and conventions in this project
+- Do not change production code logic to make tests pass
+TESTING_PROMPT_EOF
 
-3. **E2E tests** (`tests/e2e/`):
-   - Reserved for critical user workflows only
-   - Use realistic data
-   - Assert on observable outcomes (UI, API responses)
-   - Keep E2E tests < 10% of total test suite
+write_file ".github/prompts/documentation.prompt.md" <<DOCUMENTATION_EOF
+---
+description: Write or update documentation for the specified code, module, or API.
+mode: ask
+tools:
+  - search
+  - editFiles
+---
+# Documentation
 
-4. **Coverage**:
-   - Never remove a failing test
-   - Target: ≥80% line + branch coverage
-   - Report coverage with: `npm test -- --coverage`
-TESTING_EOF
+Write or update documentation for this ${_LANG_DISPLAY} project.
 
-write_file ".github/prompts/documentation.md" <<'DOCUMENTATION_EOF'
-# Documentation Prompt
+## Instructions
+1. Identify what is undocumented or outdated
+2. Write clear, accurate documentation verified against the actual code
+3. Include usage examples for public APIs
+4. Update README.md if the change affects the user-facing interface
 
-When writing or updating docs:
-
-1. **Audience**: Write for developers new to the codebase, not experts.
-
-2. **Structure**:
-   - Start with the "why" before the "how"
-   - Use real code examples, not pseudo-code
-   - Include before/after comparisons where helpful
-   - Link to related docs instead of duplicating
-
-3. **API docs**:
-   - Document parameters with types and constraints
-   - Show at least one working example
-   - Document error cases explicitly
-   - Note any breaking changes
-
-4. **Readability**:
-   - Use code syntax highlighting (`typescript`, `bash`, etc.)
-   - Keep paragraphs to 3–4 sentences max
-   - Use tables for structured information
-   - Avoid jargon without defining it first
+## Output
+- Updated or new documentation files
+- Inline code comments where the code is complex
+- Usage examples that actually run
 DOCUMENTATION_EOF
 
 # =============================================================================
-# 4e. .github/agents/  — individual agent personas
+# 4h. .vscode/mcp.json  — MCP server configuration for VS Code
+# =============================================================================
+# MCP (Model Context Protocol) servers extend Copilot Chat with additional tools.
+# This file is workspace-scoped and committed with the project.
+# Reference: https://code.visualstudio.com/docs/copilot/copilot-customization
 # =============================================================================
 echo
-echo -e "${BOLD}── 4e. Agent personas in .github/agents/ ──────────────────────────────────${RESET}"
+echo -e "${BOLD}── 4h. .vscode/mcp.json (MCP server config) ─────────────────────────────${RESET}"
 
-write_file ".github/agents/test-agent.md" <<'TESTAGENT_EOF'
----
-name: test-agent
-description: Write and maintain unit and integration tests
----
+write_file ".vscode/mcp.json" <<'MCP_EOF'
+{
+  // MCP (Model Context Protocol) server configuration for VS Code Copilot.
+  // Add server entries below to extend Copilot Chat with additional tools.
+  // Reference: https://code.visualstudio.com/docs/copilot/copilot-customization
+  //
+  // Example — GitHub MCP server (requires GitHub Copilot subscription):
+  // "servers": {
+  //   "github": {
+  //     "type": "http",
+  //     "url": "https://api.githubcopilot.com/mcp"
+  //   }
+  // }
+  "servers": {}
+}
+MCP_EOF
 
-You are a QA engineer specializing in test automation.
+# =============================================================================
+# 4i. .github/hooks/*.json  — VS Code Copilot agent lifecycle hooks
+# =============================================================================
+# VS Code reads *.json files in .github/hooks/ for agent lifecycle events.
+# (e.g. PostToolUse to auto-format after file edits)
+# Note: .github/hooks/pre-commit is a git hook (shell script), not a VS Code hook.
+# Reference: https://code.visualstudio.com/docs/copilot/copilot-customization
+# =============================================================================
+echo
+echo -e "${BOLD}── 4i. .github/hooks/ (VS Code agent hooks) ─────────────────────────────${RESET}"
 
-## Role
-
-- You write comprehensive, deterministic unit and integration tests
-- You understand the codebase and testing patterns
-- Your goal: ensure every feature has passing tests before merging
-
-## Project knowledge
-
-- **Test framework:** Jest + ts-jest
-- **Test locations:** `tests/unit/`, `tests/integration/`, `tests/e2e/`
-- **Coverage goal:** ≥80% branches + lines
-
-## Commands
-
-- `npm test` — run all tests
-- `npm test -- --testPathPattern=<pattern>` — run tests by filename
-- `npm test -- --coverage` — run with coverage report
-
-## Standards
-
-- Test names are descriptive: `should return 404 when user not found`, not `test 1`
-- Each describe block tests one function
-- Use test fixtures (factories, mocks) for setup
-- Happy path + at least 2 error cases per function
-- Never remove a failing test without fixing it or getting approval
-
-## Boundaries
-
-- ✅ **Always:** Write to `tests/`, make tests pass, run coverage
-- ⚠️ **Ask first:** Modify test framework config, add new dependencies
-- 🚫 **Never:** Modify source code in `src/`, remove failing tests, skip assertions
-TESTAGENT_EOF
-
-write_file ".github/agents/lint-agent.md" <<'LINTAGENT_EOF'
----
-name: lint-agent
-description: Fix linting errors and enforce code style
----
-
-You are a code quality engineer focused on consistency and style.
-
-## Role
-
-- You fix ESLint violations and formatting issues
-- You ensure code follows the project's style guide
-- Your goal: pass all lint checks before merge
-
-## Project knowledge
-
-- **Style rules:** See AGENTS.md (single quotes, 2-space indent, no semicolons)
-- **Linter:** ESLint with TypeScript support
-- **Formatter:** Prettier
-
-## Commands
-
-- `npm run lint` — check for violations
-- `npm run lint -- --fix` — auto-fix all fixable violations
-- `npm run format` — run Prettier
-- `npm run typecheck` — verify TypeScript
-
-## Standards
-
-- Follow TypeScript strict mode
-- Naming: camelCase for vars/functions, PascalCase for classes/types, UPPER_SNAKE_CASE for constants
-- No `any` types without explicit `// @ts-expect-error` comment
-- No unused imports, variables, or parameters
-
-## Boundaries
-
-- ✅ **Always:** Fix style, run lint --fix, pass all checks
-- ⚠️ **Ask first:** Modify ESLint config, change naming conventions
-- 🚫 **Never:** Change code logic to fix linting, disable rules with eslint-disable
-LINTAGENT_EOF
-
-write_file ".github/agents/docs-agent.md" <<'DOCSAGENT_EOF'
----
-name: docs-agent
-description: Write and maintain project documentation
----
-
-You are a technical writer focused on clarity and completeness.
-
-## Role
-
-- You read code from `src/` and generate documentation
-- You update README, API reference, and architecture docs
-- Your goal: make the codebase understandable to newcomers
-
-## Project knowledge
-
-- **Tech Stack:** TypeScript, Jest, Express/Fastify (update as needed)
-- **Doc locations:** `docs/` for human-facing, `AGENTS.md` for agents
-- **Audience:** developers new to the project
-
-## Commands
-
-- None required — read code and write docs only
-
-## Standards
-
-- Write for clarity: one idea per paragraph, concrete examples
-- Use real code snippets with syntax highlighting
-- Include before/after comparisons where helpful
-- Link to related docs; don't duplicate information
-- Update docs when code changes significantly
-
-## Boundaries
-
-- ✅ **Always:** Write to `docs/`, follow markdown style, include examples
-- ⚠️ **Ask first:** Before major restructuring of existing docs
-- 🚫 **Never:** Modify source code in `src/`, commit unfinished draft docs
-DOCSAGENT_EOF
-
-write_file ".github/agents/security-agent.md" <<'SECAGENT_EOF'
----
-name: security-agent
-description: Review code for security vulnerabilities
----
-
-You are a security engineer focused on OWASP best practices.
-
-## Role
-
-- You review code for common security vulnerabilities
-- You flag credential exposure, injection risks, and auth issues
-- Your goal: prevent security regressions
-
-## Project knowledge
-
-- **Baseline:** OWASP Top 10 (A01–A10)
-- **Critical issues:** Hardcoded secrets, SQL injection, XSS, weak auth
-- **Standards:** See AGENTS.md security section
-
-## Commands
-
-- `npm run lint` — catches some style issues
-- Manual code review for logic flaws
-
-## Standards
-
-- Validate and sanitise all user input at system boundaries
-- Use parameterised queries (never string interpolation in SQL)
-- No secrets in source code or commit messages
-- Error messages should not leak system details
-- Authentication must validate tokens before processing requests
-
-## Boundaries
-
-- ✅ **Always:** Flag credential risks, injection vulnerabilities, weak auth
-- ⚠️ **Ask first:** Before suggesting major refactors
-- 🚫 **Never:** Approve commits with hardcoded secrets
-SECAGENT_EOF
+write_file ".github/hooks/format.json" <<FORMAT_HOOK_EOF
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "toolNames": ["editFiles"],
+        "command": "${_LANG_FORMAT_CMD}"
+      }
+    ]
+  }
+}
+FORMAT_HOOK_EOF
 
 # =============================================================================
 # 5. .github/CODEOWNERS
@@ -1554,12 +2502,495 @@ and referenced here by URL, not committed to git.
 SUPPORT_EOF
 
 # =============================================================================
-# 17. Source stubs (TypeScript skeleton)
+# 17-23. LANGUAGE-SPECIFIC: source stubs, test stubs, build config
 # =============================================================================
 echo
-echo -e "${BOLD}── 17. Source stubs ────────────────────────────────────────────────────────${RESET}"
+echo -e "${BOLD}── 17. Language-specific stubs & build config ($PROJECT_LANG) ──────────────${RESET}"
 
-write_file "src/types/index.ts" <<'TYPES_EOF'
+case "$PROJECT_LANG" in
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GO stubs
+# ─────────────────────────────────────────────────────────────────────────────
+go)
+  _PKG_NAME="${PROJECT_NAME:-$(basename "$ROOT_DIR")}"
+  _PKG_NAME="${_PKG_NAME:-my-project}"
+
+  write_file "go.mod" <<GOMOD_EOF
+module github.com/OWNER/${_PKG_NAME}
+
+go 1.22
+GOMOD_EOF
+
+  write_file "Makefile" <<'GO_MAKE_EOF'
+.PHONY: build test vet fmt lint coverage clean
+
+build:
+	go build ./...
+
+test:
+	go test ./...
+
+vet:
+	go vet ./...
+
+fmt:
+	gofmt -w ./...
+
+lint: vet fmt
+
+coverage:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
+
+clean:
+	rm -f coverage.out
+GO_MAKE_EOF
+
+  write_file "cmd/main.go" <<'GO_MAIN_EOF'
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	fmt.Println("Hello, World!")
+	return nil
+}
+GO_MAIN_EOF
+
+  write_file "internal/logger/logger.go" <<'GO_LOGGER_EOF'
+// Package logger provides a minimal structured logger.
+package logger
+
+import (
+	"encoding/json"
+	"os"
+	"time"
+)
+
+// Level represents a log severity level.
+type Level string
+
+const (
+	LevelInfo  Level = "info"
+	LevelWarn  Level = "warn"
+	LevelError Level = "error"
+	LevelDebug Level = "debug"
+)
+
+type entry struct {
+	Time    string `json:"time"`
+	Level   Level  `json:"level"`
+	Message string `json:"msg"`
+}
+
+func log(level Level, msg string) {
+	e := entry{Time: time.Now().UTC().Format(time.RFC3339), Level: level, Message: msg}
+	_ = json.NewEncoder(os.Stderr).Encode(e)
+}
+
+// Info logs an informational message.
+func Info(msg string)  { log(LevelInfo, msg) }
+
+// Warn logs a warning message.
+func Warn(msg string)  { log(LevelWarn, msg) }
+
+// Error logs an error message.
+func Error(msg string) { log(LevelError, msg) }
+
+// Debug logs a debug message.
+func Debug(msg string) { log(LevelDebug, msg) }
+GO_LOGGER_EOF
+
+  write_file "internal/logger/logger_test.go" <<'GO_LOGGER_TEST_EOF'
+package logger_test
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/OWNER/REPO/internal/logger"
+)
+
+func TestLoggerDoesNotPanic(t *testing.T) {
+	assert.NotPanics(t, func() { logger.Info("info message") })
+	assert.NotPanics(t, func() { logger.Warn("warn message") })
+	assert.NotPanics(t, func() { logger.Error("error message") })
+	assert.NotPanics(t, func() { logger.Debug("debug message") })
+}
+GO_LOGGER_TEST_EOF
+  ;;
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RUBY stubs
+# ─────────────────────────────────────────────────────────────────────────────
+ruby)
+  _GEM_NAME="${PROJECT_NAME:-$(basename "$ROOT_DIR")}"
+  _GEM_NAME="${_GEM_NAME:-my-project}"
+  _LIB_FILE="${_GEM_NAME//-/_}"
+
+  write_file "Gemfile" <<GEMFILE_EOF
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gem "bundler", "~> 2.5"
+
+group :development, :test do
+  gem "rspec", "~> 3.13"
+  gem "rubocop", "~> 1.65", require: false
+  gem "rubocop-rspec", require: false
+  gem "simplecov", require: false
+end
+GEMFILE_EOF
+
+  write_file ".rubocop.yml" <<'RUBOCOP_EOF'
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: enable
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Metrics/MethodLength:
+  Max: 20
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+RUBOCOP_EOF
+
+  write_file ".rspec" <<'RSPEC_EOF'
+--require spec_helper
+--format documentation
+--color
+RSPEC_EOF
+
+  write_file "spec/spec_helper.rb" <<'SPEC_HELPER_EOF'
+# frozen_string_literal: true
+
+require "simplecov"
+SimpleCov.start if ENV["COVERAGE"]
+
+RSpec.configure do |config|
+  config.expect_with :rspec do |expectations|
+    expectations.include_chain_clauses_in_custom_matcher_descriptions = true
+  end
+  config.mock_with :rspec do |mocks|
+    mocks.verify_partial_doubles = true
+  end
+  config.shared_context_metadata_behavior = :apply_to_host_groups
+  config.order = :random
+  Kernel.srand config.seed
+end
+SPEC_HELPER_EOF
+
+  write_file "lib/${_LIB_FILE}/logger.rb" <<RUBY_LOGGER_EOF
+# frozen_string_literal: true
+
+module ${_GEM_NAME^}
+  # Minimal structured logger that writes JSON to STDERR.
+  module Logger
+    LEVELS = %w[debug info warn error].freeze
+
+    def self.info(msg)  = log("info",  msg)
+    def self.warn(msg)  = log("warn",  msg)
+    def self.error(msg) = log("error", msg)
+    def self.debug(msg) = log("debug", msg)
+
+    def self.log(level, msg)
+      $stderr.puts({ time: Time.now.utc.iso8601, level: level, msg: msg }.to_json)
+    end
+  end
+end
+RUBY_LOGGER_EOF
+
+  write_file "spec/unit/logger_spec.rb" <<'RUBY_LOGGER_SPEC_EOF'
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe "Logger" do
+  it "responds to info, warn, error, debug" do
+    %i[info warn error debug].each do |method|
+      expect { $stderr.stub(:puts) }.not_to raise_error
+    end
+  end
+end
+RUBY_LOGGER_SPEC_EOF
+  ;;
+
+# ─────────────────────────────────────────────────────────────────────────────
+# C stubs
+# ─────────────────────────────────────────────────────────────────────────────
+c)
+  write_file "Makefile" <<'C_MAKE_EOF'
+CC      = gcc
+CFLAGS  = -std=c11 -Wall -Wextra -Wpedantic -Wimplicit-function-declaration \
+          -g -fprofile-arcs -ftest-coverage
+LDFLAGS = -lgcov
+
+SRC_DIR   = src
+INC_DIR   = include
+TEST_DIR  = tests/unit
+
+SRCS      = $(wildcard $(SRC_DIR)/*.c)
+TEST_SRCS = $(wildcard $(TEST_DIR)/*.c)
+TEST_BIN  = tests/test_suite
+
+.PHONY: all build test coverage clean lint
+
+all: build
+
+build: $(SRCS)
+	$(CC) $(CFLAGS) -I$(INC_DIR) $(SRCS) -o app $(LDFLAGS)
+
+test: $(SRCS) $(TEST_SRCS)
+	$(CC) $(CFLAGS) -I$(INC_DIR) -Ivendor/unity/src \
+	      vendor/unity/src/unity.c $(SRCS) $(TEST_SRCS) \
+	      -o $(TEST_BIN) $(LDFLAGS)
+	./$(TEST_BIN)
+
+coverage: test
+	gcov $(SRCS)
+	lcov --capture --directory . --output-file coverage.info
+	genhtml coverage.info --output-directory coverage-report
+
+lint:
+	cppcheck --enable=all --error-exitcode=1 $(SRC_DIR)/ $(INC_DIR)/
+
+clean:
+	rm -f app $(TEST_BIN) *.gcda *.gcno *.gcov coverage.info
+	rm -rf coverage-report
+C_MAKE_EOF
+
+  write_file "include/logger.h" <<'C_LOGGER_H_EOF'
+#ifndef LOGGER_H
+#define LOGGER_H
+
+/* Minimal structured logger — writes JSON to stderr. */
+
+void log_info(const char *msg);
+void log_warn(const char *msg);
+void log_error(const char *msg);
+void log_debug(const char *msg);
+
+#endif /* LOGGER_H */
+C_LOGGER_H_EOF
+
+  write_file "src/logger.c" <<'C_LOGGER_C_EOF'
+#include <stdio.h>
+#include <time.h>
+#include "logger.h"
+
+static void log_msg(const char *level, const char *msg) {
+    time_t now = time(NULL);
+    char buf[32];
+    strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+    fprintf(stderr, "{\"time\":\"%s\",\"level\":\"%s\",\"msg\":\"%s\"}\n",
+            buf, level, msg);
+}
+
+void log_info(const char *msg)  { log_msg("info",  msg); }
+void log_warn(const char *msg)  { log_msg("warn",  msg); }
+void log_error(const char *msg) { log_msg("error", msg); }
+void log_debug(const char *msg) { log_msg("debug", msg); }
+C_LOGGER_C_EOF
+
+  write_file "src/main.c" <<'C_MAIN_EOF'
+#include <stdio.h>
+#include "logger.h"
+
+int main(void) {
+    log_info("application started");
+    printf("Hello, World!\n");
+    log_info("application exiting");
+    return 0;
+}
+C_MAIN_EOF
+
+  write_file "tests/unit/test_logger.c" <<'C_TEST_EOF'
+/* Unit tests for logger using Unity test framework.
+   Compile: make test
+   Unity source expected at vendor/unity/src/unity.c */
+
+#include "unity.h"
+#include "logger.h"
+
+void setUp(void) {}
+void tearDown(void) {}
+
+void test_log_info_does_not_crash(void) {
+    log_info("test info message");
+    TEST_PASS();
+}
+
+void test_log_warn_does_not_crash(void) {
+    log_warn("test warn message");
+    TEST_PASS();
+}
+
+void test_log_error_does_not_crash(void) {
+    log_error("test error message");
+    TEST_PASS();
+}
+
+int main(void) {
+    UNITY_BEGIN();
+    RUN_TEST(test_log_info_does_not_crash);
+    RUN_TEST(test_log_warn_does_not_crash);
+    RUN_TEST(test_log_error_does_not_crash);
+    return UNITY_END();
+}
+C_TEST_EOF
+  ;;
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PYTHON stubs
+# ─────────────────────────────────────────────────────────────────────────────
+python)
+  _PKG_NAME="${PROJECT_NAME:-$(basename "$ROOT_DIR")}"
+  _PKG_NAME="${_PKG_NAME:-my-project}"
+  _PY_PKG="${_PKG_NAME//-/_}"
+
+  write_file "pyproject.toml" <<PYPROJECT_EOF
+[project]
+name = "${_PKG_NAME}"
+version = "0.1.0"
+description = "${_PKG_NAME} project"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "mypy>=1.10",
+  "ruff>=0.5",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.coverage.report]
+fail_under = 80
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "S", "UP"]
+PYPROJECT_EOF
+
+  write_file "src/${_PY_PKG}/__init__.py" <<PYINIT_EOF
+"""${_PKG_NAME} package."""
+
+__version__ = "0.1.0"
+PYINIT_EOF
+
+  write_file "src/${_PY_PKG}/logger.py" <<'PY_LOGGER_EOF'
+"""Minimal structured logger writing JSON to stderr."""
+
+from __future__ import annotations
+
+import json
+import sys
+from datetime import datetime, timezone
+
+
+def _log(level: str, msg: str) -> None:
+    entry = {
+        "time": datetime.now(tz=timezone.utc).isoformat(),
+        "level": level,
+        "msg": msg,
+    }
+    print(json.dumps(entry), file=sys.stderr)
+
+
+def info(msg: str) -> None:
+    """Log an informational message."""
+    _log("info", msg)
+
+
+def warn(msg: str) -> None:
+    """Log a warning message."""
+    _log("warn", msg)
+
+
+def error(msg: str) -> None:
+    """Log an error message."""
+    _log("error", msg)
+
+
+def debug(msg: str) -> None:
+    """Log a debug message."""
+    _log("debug", msg)
+PY_LOGGER_EOF
+
+  write_file "tests/__init__.py" <<'PY_TESTS_INIT_EOF'
+PY_TESTS_INIT_EOF
+
+  write_file "tests/unit/__init__.py" <<'PY_UNIT_INIT_EOF'
+PY_UNIT_INIT_EOF
+
+  write_file "tests/unit/test_logger.py" <<'PY_TEST_EOF'
+"""Unit tests for the logger module."""
+
+import json
+import sys
+from io import StringIO
+
+import pytest
+
+from src.PACKAGE.logger import debug, error, info, warn
+
+
+@pytest.mark.parametrize("fn,level", [
+    (info, "info"),
+    (warn, "warn"),
+    (error, "error"),
+    (debug, "debug"),
+])
+def test_logger_writes_json(fn, level, capsys):
+    fn("hello")
+    captured = capsys.readouterr()
+    entry = json.loads(captured.err)
+    assert entry["level"] == level
+    assert entry["msg"] == "hello"
+    assert "time" in entry
+PY_TEST_EOF
+
+  # Replace placeholder with actual package name
+  if [[ -f "tests/unit/test_logger.py" ]]; then
+    sed -i "s/from src\\.PACKAGE/from src.${_PY_PKG}/g" tests/unit/test_logger.py
+  fi
+  ;;
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TYPESCRIPT stubs (default)
+# ─────────────────────────────────────────────────────────────────────────────
+*)
+  write_file "src/types/index.ts" <<'TYPES_EOF'
 // Central type exports.
 // Define domain types here and import from 'src/types' across the codebase.
 
@@ -1570,7 +3001,7 @@ export interface User {
 }
 TYPES_EOF
 
-write_file "src/lib/logger.ts" <<'LOGGER_EOF'
+  write_file "src/lib/logger.ts" <<'LOGGER_EOF'
 // Minimal structured logger.
 // Replace with pino, winston, or your preferred library.
 
@@ -1598,13 +3029,7 @@ function toObj(data: unknown): Record<string, unknown> {
 }
 LOGGER_EOF
 
-# =============================================================================
-# 18. Test stubs
-# =============================================================================
-echo
-echo -e "${BOLD}── 18. Test stubs ─────────────────────────────────────────────────────────${RESET}"
-
-write_file "tests/unit/logger.test.ts" <<'TEST_EOF'
+  write_file "tests/unit/logger.test.ts" <<'TEST_EOF'
 import { logger } from '../../src/lib/logger'
 
 describe('logger', () => {
@@ -1617,18 +3042,10 @@ describe('logger', () => {
 })
 TEST_EOF
 
-# =============================================================================
-# 19. package.json  (Node/TypeScript project skeleton)
-# =============================================================================
-echo
-echo -e "${BOLD}── 19. package.json ────────────────────────────────────────────────────────${RESET}"
+  _PKG_NAME="${PROJECT_NAME:-$(basename "$ROOT_DIR")}"
+  _PKG_NAME="${_PKG_NAME:-my-project}"
 
-# Use PROJECT_NAME env var when set (e.g. called from create-new-project.sh),
-# otherwise fall back to the directory name, then "my-project" as last resort.
-_PKG_NAME="${PROJECT_NAME:-$(basename "$ROOT_DIR")}"
-_PKG_NAME="${_PKG_NAME:-my-project}"
-
-write_file "package.json" <<PKG_EOF
+  write_file "package.json" <<PKG_EOF
 {
   "name": "$_PKG_NAME",
   "version": "0.1.0",
@@ -1663,13 +3080,7 @@ write_file "package.json" <<PKG_EOF
 }
 PKG_EOF
 
-# =============================================================================
-# 20. tsconfig.json
-# =============================================================================
-echo
-echo -e "${BOLD}── 20. tsconfig.json ───────────────────────────────────────────────────────${RESET}"
-
-write_file "tsconfig.json" <<'TS_EOF'
+  write_file "tsconfig.json" <<'TS_EOF'
 {
   "compilerOptions": {
     "target": "ES2022",
@@ -1695,13 +3106,7 @@ write_file "tsconfig.json" <<'TS_EOF'
 }
 TS_EOF
 
-# =============================================================================
-# 21. Jest configuration
-# =============================================================================
-echo
-echo -e "${BOLD}── 21. Jest config ─────────────────────────────────────────────────────────${RESET}"
-
-write_file "jest.config.js" <<'JEST_EOF'
+  write_file "jest.config.js" <<'JEST_EOF'
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',
@@ -1719,13 +3124,7 @@ module.exports = {
 }
 JEST_EOF
 
-# =============================================================================
-# 22. ESLint flat config
-# =============================================================================
-echo
-echo -e "${BOLD}── 22. ESLint config ────────────────────────────────────────────────────────${RESET}"
-
-write_file "eslint.config.js" <<'ESLINT_EOF'
+  write_file "eslint.config.js" <<'ESLINT_EOF'
 const tsParser = require('@typescript-eslint/parser')
 const tsPlugin = require('@typescript-eslint/eslint-plugin')
 
@@ -1745,8 +3144,8 @@ module.exports = [
       ...tsPlugin.configs['recommended'].rules,
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/explicit-function-return-type': 'warn',
-      'no-console': 'warn',           // use logger instead
-      'no-eval': 'error',             // OWASP A03 injection prevention
+      'no-console': 'warn',
+      'no-eval': 'error',
       'no-implied-eval': 'error',
       'no-new-func': 'error',
     },
@@ -1754,13 +3153,7 @@ module.exports = [
 ]
 ESLINT_EOF
 
-# =============================================================================
-# 23. Prettier config
-# =============================================================================
-echo
-echo -e "${BOLD}── 23. Prettier config ──────────────────────────────────────────────────────${RESET}"
-
-write_file ".prettierrc.json" <<'PRETTIER_EOF'
+  write_file ".prettierrc.json" <<'PRETTIER_EOF'
 {
   "semi": false,
   "singleQuote": true,
@@ -1771,12 +3164,14 @@ write_file ".prettierrc.json" <<'PRETTIER_EOF'
 }
 PRETTIER_EOF
 
-write_file ".prettierignore" <<'PRETTIERIGNORE_EOF'
+  write_file ".prettierignore" <<'PRETTIERIGNORE_EOF'
 node_modules/
 dist/
 coverage/
 *.lock
 PRETTIERIGNORE_EOF
+  ;;
+esac
 
 # =============================================================================
 # 24. .claudeignore  — tell Claude Code which files to skip

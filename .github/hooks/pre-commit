@@ -39,6 +39,11 @@ LEAKED=false
 # Check for patterns in staged files
 while IFS= read -r file; do
   [[ -z "$file" ]] && continue
+  # Skip scaffold/template scripts — they intentionally define example patterns
+  [[ "$file" == scripts/scaffold-*.sh ]] && continue
+  [[ "$file" == scripts/create-*.sh ]] && continue
+  # Skip the hook definition itself — it contains the pattern list
+  [[ "$file" == .github/hooks/pre-commit ]] && continue
   for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
     if git show ":$file" 2>/dev/null | grep -qi "$pattern"; then
       echo -e "${RED}✗ Secret pattern detected in $file: $pattern${RESET}"
