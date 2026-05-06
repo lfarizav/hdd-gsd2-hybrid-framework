@@ -115,7 +115,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# ── Interactive prompts for parent directory and project name ────────────────
+# ── Interactive prompts for project name and parent directory ────────────────
 echo
 echo -e "${BOLD}${BLUE}╔══════════════════════════════════════════════════════════╗${RESET}"
 echo -e "${BOLD}${BLUE}║   New Agentic Engineering Project                        ║${RESET}"
@@ -123,7 +123,13 @@ echo -e "${BOLD}${BLUE}║   Spec-Kit  +  GSD-v1  +  GSD-2  +  VS Code          
 echo -e "${BOLD}${BLUE}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo
 
-# Ask for parent directory if not provided
+# Ask for project name if not provided (ASK FIRST)
+if [[ -z "$PROJECT_NAME" ]]; then
+  printf "  Project name (lowercase, alphanumeric + hyphens)? > "
+  read -r PROJECT_NAME </dev/tty
+fi
+
+# Ask for parent directory if not provided (ASK SECOND)
 if [[ -z "$PARENT_DIR" ]]; then
   printf "  Where should the project be created? (default: $HOME) > "
   read -r PARENT_DIR </dev/tty
@@ -131,12 +137,6 @@ if [[ -z "$PARENT_DIR" ]]; then
   PARENT_DIR="${PARENT_DIR:-$HOME}"            # default to $HOME
 fi
 mkdir -p "$PARENT_DIR"
-
-# Ask for project name if not provided
-if [[ -z "$PROJECT_NAME" ]]; then
-  printf "  Project name (lowercase, alphanumeric + hyphens)? > "
-  read -r PROJECT_NAME </dev/tty
-fi
 
 [[ -z "$PROJECT_NAME" ]] && error "Project name is required."
 
@@ -277,9 +277,12 @@ step "── Step 2: Create project directory ───────────�
 mkdir -p "$PROJECT_DIR/scripts"
 success "Created: $PROJECT_DIR"
 
-# Copy scaffold scripts into the new project's scripts/ directory for execution.
-# These are temporary — they will be deleted after setup (Step 6b).
-# They're not part of the new project; they're framework infrastructure.
+# Copy scaffold scripts into the new project's scripts/ directory.
+# These are useful utilities that the team can use for:
+#   - Re-scaffolding parts of the project
+#   - Understanding how the project was built
+#   - Reproducibility across team members
+# They stay in the project as version-controlled tools.
 cp "$SCRIPT_DIR/scaffold-project.sh"         "$PROJECT_DIR/scripts/"
 cp "$SCRIPT_DIR/scaffold-hybrid-framework.sh" "$PROJECT_DIR/scripts/"
 chmod +x "$PROJECT_DIR/scripts/scaffold-project.sh"
@@ -472,23 +475,19 @@ Design principle: arXiv:2602.11988 — minimal, non-redundant AGENTS.md"
 )
 
 # =============================================================================
-# STEP 7 — CLEAN UP SCAFFOLD SCRIPTS
+# STEP 7 — MAKE SCAFFOLD SCRIPTS EXECUTABLE & DOCUMENT
 # =============================================================================
-# The scaffold scripts were only needed to create the project. They don't
-# belong in the new project's repository — that's framework infrastructure,
-# not project code. Delete them and commit the cleanup.
-step "── Step 7: Clean up scaffold scripts ────────────────────────────────────"
+# Keep scaffold scripts as useful project utilities for:
+#   - Re-scaffolding after adding new language support
+#   - Understanding the project structure
+#   - Reproducibility (scripts are part of the project)
+step "── Step 7: Make scaffold scripts executable ────────────────────────────────"
 
-if [[ -f "$PROJECT_DIR/scripts/scaffold-project.sh" || -f "$PROJECT_DIR/scripts/scaffold-hybrid-framework.sh" ]]; then
-  (
-    cd "$PROJECT_DIR"
-    rm -f scripts/scaffold-project.sh scripts/scaffold-hybrid-framework.sh
-    git add -A
-    if ! git diff --cached --quiet; then
-      git commit --no-verify --message "chore: remove scaffold scripts (framework infrastructure, not project code)"
-      success "Removed scaffold scripts and committed cleanup"
-    fi
-  )
+if [[ -f "$PROJECT_DIR/scripts/scaffold-project.sh" && -f "$PROJECT_DIR/scripts/scaffold-hybrid-framework.sh" ]]; then
+  chmod +x "$PROJECT_DIR/scripts/scaffold-project.sh"
+  chmod +x "$PROJECT_DIR/scripts/scaffold-hybrid-framework.sh"
+  success "Scaffold scripts are now executable utilities in the project"
+  success "Use: bash scripts/scaffold-project.sh [--force] or scaffold-hybrid-framework.sh"
 fi
 
 # =============================================================================
