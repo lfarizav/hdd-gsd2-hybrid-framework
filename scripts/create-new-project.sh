@@ -281,7 +281,7 @@ export PROJECT_NAME
 export PROJECT_DIR
 export PROJECT_LANG
 
-(cd "$PROJECT_DIR" && bash scripts/scaffold-project.sh $FORCE_FLAG)
+bash "$SCRIPT_DIR/scaffold-project.sh" $FORCE_FLAG
 success "Base project scaffold complete"
 
 # =============================================================================
@@ -293,7 +293,7 @@ info "Running scaffold-hybrid-framework.sh in $PROJECT_DIR ..."
 HYBRID_FLAGS="$FORCE_FLAG"
 [[ "$INSTALL_CLIS" == true ]] && HYBRID_FLAGS="$HYBRID_FLAGS --install-clis"
 
-(cd "$PROJECT_DIR" && bash scripts/scaffold-hybrid-framework.sh $HYBRID_FLAGS)
+bash "$SCRIPT_DIR/scaffold-hybrid-framework.sh" $HYBRID_FLAGS
 success "Hybrid framework scaffold complete"
 
 # =============================================================================
