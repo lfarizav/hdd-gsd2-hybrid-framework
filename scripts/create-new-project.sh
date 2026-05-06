@@ -231,15 +231,54 @@ if [[ -d "$PROJECT_DIR" ]]; then
 fi
 
 # =============================================================================
-# STEP 1 — CREATE PROJECT DIRECTORY
+# STEP 1 — CHECK FRAMEWORK UPDATES
 # =============================================================================
-step "── Step 1: Create project directory ─────────────────────────────────────"
+step "── Step 1: Check framework updates ──────────────────────────────────────"
+
+# Ensure we have the latest framework before scaffolding new projects.
+# This guarantees new projects use the most recent features and fixes.
+
+if git -C "$FRAMEWORK_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  info "Fetching latest framework version from origin..."
+  
+  CURRENT_COMMIT=$(git -C "$FRAMEWORK_ROOT" rev-parse --short HEAD)
+  CURRENT_BRANCH=$(git -C "$FRAMEWORK_ROOT" rev-parse --abbrev-ref HEAD)
+  
+  # Fetch latest without pulling (non-invasive)
+  git -C "$FRAMEWORK_ROOT" fetch origin main 2>/dev/null || warn "Could not fetch framework updates (network issue?)"
+  
+  # Check if we're behind
+  BEHIND=$(git -C "$FRAMEWORK_ROOT" rev-list --count main..origin/main 2>/dev/null || echo "0")
+  
+  if [[ "$BEHIND" -gt 0 ]]; then
+    warn "Framework is $BEHIND commit(s) behind origin/main"
+    warn "Pulling latest updates..."
+    
+    if git -C "$FRAMEWORK_ROOT" pull origin main >/dev/null 2>&1; then
+      LATEST_COMMIT=$(git -C "$FRAMEWORK_ROOT" rev-parse --short HEAD)
+      success "Framework updated ($CURRENT_COMMIT → $LATEST_COMMIT)"
+      success "New projects will use the latest framework version"
+    else
+      warn "Could not pull framework updates (local changes?)"
+      warn "Proceeding with current version: $CURRENT_COMMIT"
+    fi
+  else
+    success "Framework is up to date ($CURRENT_COMMIT)"
+  fi
+else
+  warn "Framework is not a git repository — skipping update check"
+fi
+
+# =============================================================================
+# STEP 2 — CREATE PROJECT DIRECTORY
+# =============================================================================
+step "── Step 2: Create project directory ─────────────────────────────────────"
 
 mkdir -p "$PROJECT_DIR/scripts"
 success "Created: $PROJECT_DIR"
 
 # Copy scaffold scripts into the new project's scripts/ directory for execution.
-# These are temporary — they will be deleted after setup (Step 5b).
+# These are temporary — they will be deleted after setup (Step 6b).
 # They're not part of the new project; they're framework infrastructure.
 cp "$SCRIPT_DIR/scaffold-project.sh"         "$PROJECT_DIR/scripts/"
 cp "$SCRIPT_DIR/scaffold-hybrid-framework.sh" "$PROJECT_DIR/scripts/"
@@ -248,9 +287,9 @@ chmod +x "$PROJECT_DIR/scripts/scaffold-hybrid-framework.sh"
 success "Copied scaffold scripts to $PROJECT_DIR/scripts/"
 
 # =============================================================================
-# STEP 2 — RUN SCAFFOLD-PROJECT.SH
+# STEP 3 — RUN SCAFFOLD-PROJECT.SH
 # =============================================================================
-step "── Step 2: Run scaffold-project.sh ──────────────────────────────────────"
+step "── Step 3: Run scaffold-project.sh ──────────────────────────────────────"
 info "Running scaffold-project.sh in $PROJECT_DIR ..."
 
 # Export project-related env vars so scaffold scripts can use them.
@@ -262,9 +301,9 @@ export PROJECT_LANG
 success "Base project scaffold complete"
 
 # =============================================================================
-# STEP 3 — RUN SCAFFOLD-HYBRID-FRAMEWORK.SH
+# STEP 4 — RUN SCAFFOLD-HYBRID-FRAMEWORK.SH
 # =============================================================================
-step "── Step 3: Run scaffold-hybrid-framework.sh ─────────────────────────────"
+step "── Step 4: Run scaffold-hybrid-framework.sh ─────────────────────────────"
 info "Running scaffold-hybrid-framework.sh in $PROJECT_DIR ..."
 
 HYBRID_FLAGS="$FORCE_FLAG"
@@ -274,13 +313,13 @@ HYBRID_FLAGS="$FORCE_FLAG"
 success "Hybrid framework scaffold complete"
 
 # =============================================================================
-# STEP 4 — PLACEHOLDER SUBSTITUTION
+# STEP 5 — PLACEHOLDER SUBSTITUTION
 # =============================================================================
 # Replace generic placeholders in generated files with real project values.
 # scaffold-project.sh uses 'EOF' heredocs (no shell expansion), so we must
 # do this post-hoc with sed.
 # =============================================================================
-step "── Step 4: Substitute placeholders ─────────────────────────────────────"
+step "── Step 5: Substitute placeholders ─────────────────────────────────────"
 
 # Detect GitHub username (used in repo URL and CODEOWNERS if gh is available)
 GITHUB_USER=""
@@ -397,9 +436,9 @@ done
 success "Updated GitHub Actions workflow files"
 
 # =============================================================================
-# STEP 5 — COMMIT HYBRID FRAMEWORK FILES + PLACEHOLDER UPDATES
+# STEP 6 — COMMIT HYBRID FRAMEWORK FILES + PLACEHOLDER UPDATES
 # =============================================================================
-step "── Step 5: Commit hybrid framework files ────────────────────────────────"
+step "── Step 6: Commit hybrid framework files ────────────────────────────────"
 
 (
   cd "$PROJECT_DIR"
@@ -433,12 +472,12 @@ Design principle: arXiv:2602.11988 — minimal, non-redundant AGENTS.md"
 )
 
 # =============================================================================
-# STEP 5b — CLEAN UP SCAFFOLD SCRIPTS
+# STEP 7 — CLEAN UP SCAFFOLD SCRIPTS
 # =============================================================================
 # The scaffold scripts were only needed to create the project. They don't
 # belong in the new project's repository — that's framework infrastructure,
 # not project code. Delete them and commit the cleanup.
-step "── Step 5b: Clean up scaffold scripts ────────────────────────────────────"
+step "── Step 7: Clean up scaffold scripts ────────────────────────────────────"
 
 if [[ -f "$PROJECT_DIR/scripts/scaffold-project.sh" || -f "$PROJECT_DIR/scripts/scaffold-hybrid-framework.sh" ]]; then
   (
@@ -453,9 +492,9 @@ if [[ -f "$PROJECT_DIR/scripts/scaffold-project.sh" || -f "$PROJECT_DIR/scripts/
 fi
 
 # =============================================================================
-# STEP 6 — CREATE GITHUB REPOSITORY
+# STEP 8 — CREATE GITHUB REPOSITORY
 # =============================================================================
-step "── Step 6: Create GitHub repository ────────────────────────────────────"
+step "── Step 8: Create GitHub repository ────────────────────────────────────"
 
 if [[ "$CREATE_GITHUB_REPO" == true && "$GH_AVAILABLE" == true ]]; then
 
@@ -503,9 +542,9 @@ else
 fi
 
 # =============================================================================
-# STEP 7 — OPEN IN VS CODE
+# STEP 9 — OPEN IN VS CODE
 # =============================================================================
-step "── Step 7: Open in VS Code ──────────────────────────────────────────────"
+step "── Step 9: Open in VS Code ──────────────────────────────────────────────"
 
 if command -v code &>/dev/null; then
   info "Opening $PROJECT_NAME in VS Code..."
