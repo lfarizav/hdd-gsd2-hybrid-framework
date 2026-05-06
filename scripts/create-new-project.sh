@@ -104,14 +104,7 @@ while [[ $# -gt 0 ]]; do
     --force)          FORCE_FLAG="--force"; shift ;;
     --description)    REPO_DESCRIPTION="$2"; shift 2 ;;
     -*)               error "Unknown option: $1  (run with --help for usage)" ;;
-    *)
-      if [[ -z "$PROJECT_NAME" ]]; then
-        PROJECT_NAME="$1"
-      else
-        error "Unexpected argument: $1"
-      fi
-      shift
-      ;;
+    *)               error "Unexpected argument: $1. Project name must be provided via interactive prompt. Run with --help for usage." ;;
   esac
 done
 
