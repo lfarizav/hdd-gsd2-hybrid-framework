@@ -114,7 +114,15 @@ make_dir() {
 
 # ── Resolve root ──────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [[ -z "${PROJECT_DIR:-}" ]]; then
+  echo
+  printf "  Where is the project folder? (default: $HOME/my-project) > "
+  read -r PROJECT_DIR </dev/tty
+  PROJECT_DIR="${PROJECT_DIR/#\~/$HOME}"         # expand leading ~
+  PROJECT_DIR="${PROJECT_DIR:-$HOME/my-project}" # default to $HOME/my-project if empty
+fi
+mkdir -p "$PROJECT_DIR"
+ROOT_DIR="$PROJECT_DIR"
 cd "$ROOT_DIR"
 
 echo
@@ -129,10 +137,10 @@ info "Working in: $ROOT_DIR"
 # =============================================================================
 layer "── Phase 0: Prerequisites ─────────────────────────────────────────────"
 
-# Verify scaffold-project.sh has already been run
+# Verify scaffold-project.sh has already been run.
+# The only guaranteed file across ALL languages is AGENTS.md.
+# package.json and tsconfig.json only exist for TypeScript projects.
 [[ -f "AGENTS.md" ]] || error "AGENTS.md not found. Run scaffold-project.sh first."
-[[ -f "package.json" ]] || error "package.json not found. Run scaffold-project.sh first."
-[[ -f "tsconfig.json" ]] || error "tsconfig.json not found. Run scaffold-project.sh first."
 success "Base project scaffold detected"
 
 # Check uv
@@ -143,11 +151,11 @@ else
   warn "To install uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
 fi
 
-# Check npm
+# Check npm — only required for TypeScript projects
 if command -v npm &>/dev/null; then
   success "npm $(npm --version) — found"
 else
-  error "npm not found. Install Node.js: https://nodejs.org/"
+  warn "npm not found. Required only for TypeScript projects. Install Node.js: https://nodejs.org/"
 fi
 
 # =============================================================================
@@ -263,6 +271,8 @@ project:
 3. **Testability** — Every public API has corresponding tests. Coverage threshold: 80%.
 4. **Readability over cleverness** — Descriptive names. Functional patterns. No `any`.
 5. **Minimal instructions** — Per arXiv:2602.11988, only specify what agents cannot discover.
+6. **Guess** — If the model is unsure about a requirement or detail, it must ask for clarification instead of making assumptions. It also must make a research on internet to get facts and evidence before coding.
+7. **Use old or deprecated libraries** — Never use old or deprecated libraries, as they may have security vulnerabilities or lack support. Always check for the latest stable versions of dependencies and ensure they are actively maintained.
 
 ---
 

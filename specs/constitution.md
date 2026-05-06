@@ -14,10 +14,10 @@
 
 ```yaml
 project:
-  name: "heritage"
-  purpose: "Deploys a Kubernetes cluster using kind with Calico CNI and pre-downloaded images, supporting N control-plane nodes and M worker nodes."
-  owner: "Luis Felipe Ariza Vesga"
-  repository: "https://github.com/lfarizav/hdd-gsd2-hybrid-framework.git"
+  name: 'heritage'
+  purpose: 'Deploys a Kubernetes cluster using kind with Calico CNI and pre-downloaded images, supporting N control-plane nodes and M worker nodes.'
+  owner: 'Luis Felipe Ariza Vesga'
+  repository: 'https://github.com/lfarizav/hdd-gsd2-hybrid-framework.git'
 ```
 
 ---
@@ -34,6 +34,7 @@ project:
 5. **Minimal instructions** — Per arXiv:2602.11988, only specify what agents cannot discover.
 6. **Guess** — If the model is unsure about a requirement or detail, it must ask for clarification instead of making assumptions. It also must make a research on internet to get facts and evidence before coding.
 7. **Use old or deprecated libraries** — Never use old or deprecated libraries, as they may have security vulnerabilities or lack support. Always check for the latest stable versions of dependencies and ensure they are actively maintained.
+
 ---
 
 ## Technology Constraints
@@ -66,13 +67,13 @@ technology:
 
 ## Quality Gates
 
-| Gate | Requirement | Enforced By |
-|------|------------|-------------|
-| Tests pass | `go test ./...` exits 0 | CI/CD + GSD-2 auto-verify |
-| Coverage | ≥ 80% statements | `go test -cover ./...` |
-| Lint clean | `golangci-lint run ./...` exits 0 | CI/CD + pre-commit |
-| Build clean | `go build ./...` exits 0 | CI/CD |
-| No secrets | Pre-commit scan passes | `.github/hooks/pre-commit` |
+| Gate        | Requirement                       | Enforced By                |
+| ----------- | --------------------------------- | -------------------------- |
+| Tests pass  | `go test ./...` exits 0           | CI/CD + GSD-2 auto-verify  |
+| Coverage    | ≥ 80% statements                  | `go test -cover ./...`     |
+| Lint clean  | `golangci-lint run ./...` exits 0 | CI/CD + pre-commit         |
+| Build clean | `go build ./...` exits 0          | CI/CD                      |
+| No secrets  | Pre-commit scan passes            | `.github/hooks/pre-commit` |
 
 ---
 
@@ -83,7 +84,7 @@ technology:
 
 - [ ] **GDPR** — if handling EU personal data
 - [ ] **OWASP ASVS Level 1** — application security minimum
-- [ ] *(add your requirements here)*
+- [ ] _(add your requirements here)_
 
 ---
 
@@ -99,17 +100,10 @@ technology:
 ## Definition of Done
 
 A task is complete when:
+
 - [ ] Code compiles without errors (`go build ./...`)
 - [ ] All tests pass (`go test ./...`)
 - [ ] Coverage threshold maintained (`go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out`)
 - [ ] Lint clean (`golangci-lint run ./...`)
 - [ ] AGENTS.md boundaries respected
 - [ ] No `TODO` comments left without a linked issue
-
----
-
-## Revision History
-
-| Date | Author | Change |
-|------|--------|--------|
-| 2026-05-02 | Luis Felipe Ariza Vesga | Initial constitution — heritage project |

@@ -79,7 +79,7 @@ FRAMEWORK_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 PROJECT_NAME=""
-PARENT_DIR="$HOME"
+PARENT_DIR=""
 GITHUB_VISIBILITY="private"
 GITHUB_ORG=""
 CREATE_GITHUB_REPO=true
@@ -115,25 +115,66 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -z "$PROJECT_NAME" ]] && error "Project name is required.\n  Usage: $0 <project-name> [options]"
-
-# Validate project name: lowercase alphanumeric + hyphens, DNS-1123 compatible
-if ! [[ "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$ ]]; then
-  error "Project name must be lowercase, start/end with alphanumeric, and contain only [a-z0-9-].\n  Got: '$PROJECT_NAME'"
-fi
-
-# ── Resolve paths ─────────────────────────────────────────────────────────────
-PROJECT_DIR="$PARENT_DIR/$PROJECT_NAME"
-
-# ── Banner ────────────────────────────────────────────────────────────────────
+# ── Interactive prompts for parent directory and project name ────────────────
 echo
 echo -e "${BOLD}${BLUE}╔══════════════════════════════════════════════════════════╗${RESET}"
 echo -e "${BOLD}${BLUE}║   New Agentic Engineering Project                        ║${RESET}"
 echo -e "${BOLD}${BLUE}║   Spec-Kit  +  GSD-v1  +  GSD-2  +  VS Code             ║${RESET}"
 echo -e "${BOLD}${BLUE}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo
+
+# Ask for parent directory if not provided
+if [[ -z "$PARENT_DIR" ]]; then
+  printf "  Where should the project be created? (default: $HOME) > "
+  read -r PARENT_DIR </dev/tty
+  PARENT_DIR="${PARENT_DIR/#\~/$HOME}"         # expand ~
+  PARENT_DIR="${PARENT_DIR:-$HOME}"            # default to $HOME
+fi
+mkdir -p "$PARENT_DIR"
+
+# Ask for project name if not provided
+if [[ -z "$PROJECT_NAME" ]]; then
+  printf "  Project name (lowercase, alphanumeric + hyphens)? > "
+  read -r PROJECT_NAME </dev/tty
+fi
+
+[[ -z "$PROJECT_NAME" ]] && error "Project name is required."
+
+# Validate project name: lowercase alphanumeric + hyphens, DNS-1123 compatible
+if ! [[ "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$ ]]; then
+  error "Project name must be lowercase, start/end with alphanumeric, and contain only [a-z0-9-].\n  Got: '$PROJECT_NAME'"
+fi
+
+# Ask for language/framework if not provided via env var
+if [[ -z "${PROJECT_LANG:-}" ]]; then
+  echo
+  echo -e "  Select primary language / framework:"
+  echo -e "    ${BOLD}1)${RESET} typescript  — Node.js + Jest + ts-jest        [default]"
+  echo -e "    ${BOLD}2)${RESET} go          — Go modules + go test + testify"
+  echo -e "    ${BOLD}3)${RESET} ruby        — Bundler + RSpec + RuboCop"
+  echo -e "    ${BOLD}4)${RESET} c           — Make + Unity + cppcheck + valgrind"
+  echo -e "    ${BOLD}5)${RESET} python      — uv + pytest + mypy + ruff"
+  printf "  Choice [1-5] or language name [default: typescript]: "
+  read -r _lang_choice </dev/tty
+  case "${_lang_choice:-1}" in
+    1|typescript|ts) PROJECT_LANG="typescript" ;;
+    2|go|golang)     PROJECT_LANG="go" ;;
+    3|ruby|rb)       PROJECT_LANG="ruby" ;;
+    4|c)             PROJECT_LANG="c" ;;
+    5|python|py)     PROJECT_LANG="python" ;;
+    "")              PROJECT_LANG="typescript" ;;
+    *)               warn "Unknown '${_lang_choice}', defaulting to typescript"; PROJECT_LANG="typescript" ;;
+  esac
+fi
+
+# ── Resolve paths ─────────────────────────────────────────────────────────────
+PROJECT_DIR="$PARENT_DIR/$PROJECT_NAME"
+
+# Display resolved paths
+echo
 info "Project name : $PROJECT_NAME"
 info "Project dir  : $PROJECT_DIR"
+info "Language     : $PROJECT_LANG"
 if [[ "$CREATE_GITHUB_REPO" == true ]]; then
   info "GitHub       : ${GITHUB_VISIBILITY}${GITHUB_ORG:+ (org: $GITHUB_ORG)}"
 else
@@ -212,9 +253,10 @@ success "Copied scaffold scripts to $PROJECT_DIR/scripts/"
 step "── Step 2: Run scaffold-project.sh ──────────────────────────────────────"
 info "Running scaffold-project.sh in $PROJECT_DIR ..."
 
-# Export project name so the scaffold script can use it in place of placeholders.
-# scaffold-project.sh reads PROJECT_NAME from the environment when set.
+# Export project-related env vars so scaffold scripts can use them.
 export PROJECT_NAME
+export PROJECT_DIR
+export PROJECT_LANG
 
 (cd "$PROJECT_DIR" && bash scripts/scaffold-project.sh $FORCE_FLAG)
 success "Base project scaffold complete"
