@@ -168,12 +168,35 @@ if [[ "$INSTALL_CLIS" == true ]]; then
   fi
 
   # GSD-2 CLI via npm
+  # npm install -g writes to the global prefix directory (e.g. /usr/lib/node_modules
+  # on system Node installs) which may not be writable by the current user.
+  # If the prefix is not writable, set up a user-local prefix in ~/.npm-global first.
   if command -v gsd &>/dev/null; then
     warn "gsd CLI already installed — skipping"
   else
     info "Installing GSD-2 CLI (gsd-pi)..."
-    npm install -g gsd-pi@latest
-    success "GSD-2 CLI installed: gsd"
+
+    NPM_PREFIX="$(npm config get prefix)"
+    if [[ ! -w "$NPM_PREFIX" ]]; then
+      warn "npm global prefix '$NPM_PREFIX' is not writable. Configuring user-level prefix..."
+      NPM_GLOBAL_DIR="$HOME/.npm-global"
+      mkdir -p "$NPM_GLOBAL_DIR/bin"
+      npm config set prefix "$NPM_GLOBAL_DIR"
+      # Add to PATH for the rest of this script session
+      export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
+      # Persist to ~/.profile if not already present
+      if ! grep -q 'npm-global' "$HOME/.profile" 2>/dev/null; then
+        printf '\n# npm user-level global prefix (set by scaffold-hybrid-framework.sh)\nexport PATH="$HOME/.npm-global/bin:$PATH"\n' >> "$HOME/.profile"
+        info "Added ~/.npm-global/bin to PATH in ~/.profile (re-login or 'source ~/.profile' to apply)"
+      fi
+    fi
+
+    if npm install -g gsd-pi@latest; then
+      success "GSD-2 CLI installed: gsd"
+    else
+      warn "gsd-pi install failed. Install manually after resolving npm permissions:"
+      warn "  npm install -g gsd-pi@latest"
+    fi
   fi
 
   # GSD-v1 uses npx — no global install required
