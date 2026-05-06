@@ -277,18 +277,6 @@ step "── Step 2: Create project directory ───────────�
 mkdir -p "$PROJECT_DIR/scripts"
 success "Created: $PROJECT_DIR"
 
-# Copy scaffold scripts into the new project's scripts/ directory.
-# These are useful utilities that the team can use for:
-#   - Re-scaffolding parts of the project
-#   - Understanding how the project was built
-#   - Reproducibility across team members
-# They stay in the project as version-controlled tools.
-cp "$SCRIPT_DIR/scaffold-project.sh"         "$PROJECT_DIR/scripts/"
-cp "$SCRIPT_DIR/scaffold-hybrid-framework.sh" "$PROJECT_DIR/scripts/"
-chmod +x "$PROJECT_DIR/scripts/scaffold-project.sh"
-chmod +x "$PROJECT_DIR/scripts/scaffold-hybrid-framework.sh"
-success "Copied scaffold scripts to $PROJECT_DIR/scripts/"
-
 # =============================================================================
 # STEP 3 — RUN SCAFFOLD-PROJECT.SH
 # =============================================================================
@@ -475,25 +463,9 @@ Design principle: arXiv:2602.11988 — minimal, non-redundant AGENTS.md"
 )
 
 # =============================================================================
-# STEP 7 — MAKE SCAFFOLD SCRIPTS EXECUTABLE & DOCUMENT
+# STEP 7 — CREATE GITHUB REPOSITORY
 # =============================================================================
-# Keep scaffold scripts as useful project utilities for:
-#   - Re-scaffolding after adding new language support
-#   - Understanding the project structure
-#   - Reproducibility (scripts are part of the project)
-step "── Step 7: Make scaffold scripts executable ────────────────────────────────"
-
-if [[ -f "$PROJECT_DIR/scripts/scaffold-project.sh" && -f "$PROJECT_DIR/scripts/scaffold-hybrid-framework.sh" ]]; then
-  chmod +x "$PROJECT_DIR/scripts/scaffold-project.sh"
-  chmod +x "$PROJECT_DIR/scripts/scaffold-hybrid-framework.sh"
-  success "Scaffold scripts are now executable utilities in the project"
-  success "Use: bash scripts/scaffold-project.sh [--force] or scaffold-hybrid-framework.sh"
-fi
-
-# =============================================================================
-# STEP 8 — CREATE GITHUB REPOSITORY
-# =============================================================================
-step "── Step 8: Create GitHub repository ────────────────────────────────────"
+step "── Step 7: Create GitHub repository ────────────────────────────────────"
 
 if [[ "$CREATE_GITHUB_REPO" == true && "$GH_AVAILABLE" == true ]]; then
 
@@ -541,9 +513,9 @@ else
 fi
 
 # =============================================================================
-# STEP 9 — OPEN IN VS CODE
+# STEP 8 — OPEN IN VS CODE
 # =============================================================================
-step "── Step 9: Open in VS Code ──────────────────────────────────────────────"
+step "── Step 8: Open in VS Code ──────────────────────────────────────────────"
 
 if command -v code &>/dev/null; then
   info "Opening $PROJECT_NAME in VS Code..."
