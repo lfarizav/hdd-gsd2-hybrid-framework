@@ -15,7 +15,7 @@
 >
 > **Reference:** Gloaguen, T., Mündler, N., Müller, M., Raychev, V., & Vechev, M. (2026).
 > Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?
-> *arXiv preprint arXiv:2602.11988v1 [cs.SE].*
+> _arXiv preprint arXiv:2602.11988v1 [cs.SE]._
 
 ---
 
@@ -67,14 +67,16 @@ func getUser(id interface{}) interface{} {
 
 ## Boundaries
 
-| ✅ Always | ⚠️ Ask first | 🚫 Never |
-|-----------|--------------|---------|
-| Write to `internal/`, `cmd/`, `tests/`, `docs/`, `specs/` | Add a new Go module dependency | Commit `.env` or any secret |
-| Search peer-reviewed articles of recognized engineers or official docs for guidance | Search YouTube or publisher-owned, scholarly research databases and digital libraries for guidance | search wikipedia |
-| Run `go test ./...` before marking a task done | Modify CI/CD workflows | Edit `vendor/` or build outputs |
-| Follow naming conventions above | Refactor across many files at once | Remove or skip failing tests |
-| Run `gofmt -w ./...` after edits | Change the database schema | Modify `go.sum` by hand |
-| Code with solid reasons, facts, evidences, or researches | Ask before doing if you are unsure | Guess|
+| ✅ Always                                                                           | ⚠️ Ask first                                                                                       | 🚫 Never                                |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Write to `internal/`, `cmd/`, `tests/`, `docs/`, `specs/`                           | Add a new Go module dependency                                                                     | Commit `.env` or any secret             |
+| Search peer-reviewed articles of recognized engineers or official docs for guidance | Search YouTube or publisher-owned, scholarly research databases and digital libraries for guidance | search wikipedia                        |
+| Run `go test ./...` before marking a task done                                      | Modify CI/CD workflows                                                                             | Edit `vendor/` or build outputs         |
+| Follow naming conventions above                                                     | Refactor across many files at once                                                                 | Remove or skip failing tests            |
+| Run `gofmt -w ./...` after edits                                                    | Change the database schema                                                                         | Modify `go.sum` by hand                 |
+| Code with solid reasons, facts, evidences, or researches                            | Ask before doing if you are unsure                                                                 | Guess                                   |
+| block edits to this file without human authorization                                | ask the human before editing this file                                                             | edit this file without asking the human |
+
 ---
 
 ## Research findings: What to include (and exclude) in AGENTS.md
@@ -82,21 +84,25 @@ func getUser(id interface{}) interface{} {
 **Per the peer-reviewed study (Gloaguen et al., 2026):**
 
 ### ✅ Include (minimal, specific)
+
 - **Tool requirements**: "Use `go` module commands (not dep or glide)" — agents follow these (1.6× usage when mentioned)
 - **Build/test commands**: Exact commands agents should run, nothing more
 - **Code style rules**: Specific conventions (e.g., "2-space indent", "single quotes, no semicolons")
 - **Critical security**: Only OWASP Top 10 or project-specific security boundaries
 
 ### ❌ Exclude (these don't help and add cost)
+
 - **Codebase overviews**: Study found zero effect on agent discovery speed
 - **Directory listings**: Agents explore automatically; descriptions waste tokens
 - **General architecture**: Already in README and docs/
 - **Non-critical guidance**: Duplicate what `.md` files already explain
 
 ### Why this matters
+
 - **Unnecessary instructions increase reasoning tokens by 14-22%** (harder tasks)
 - **Each extra requirement costs more** without performance gain
 - **Agents respect instructions** — so make them count
+
 ---
 
 ## Environment variables
