@@ -81,6 +81,7 @@ graph TB
 **Purpose**: `create-new-project.sh` is the single interactive entry point. It auto-updates the framework, then orchestrates the two sub-scripts in sequence.
 
 **Key features**:
+
 - Fully interactive — no positional arguments
 - Auto-updates framework before scaffolding (`update-framework.sh`)
 - `--force` flag for safe re-execution
@@ -89,6 +90,7 @@ graph TB
 - Supports Go, TypeScript, Python, Ruby, and C
 
 **Execution flow**:
+
 ```bash
 create-new-project.sh
   └─ update-framework.sh          # Pull latest framework
@@ -109,6 +111,7 @@ create-new-project.sh
 **Purpose**: Unified guidance for all AI agents (GitHub Copilot, Claude Code, Cursor, Windsurf).
 
 **Architecture**:
+
 ```mermaid
 graph LR
     AGENTS["AGENTS.md<br/>(Primary)"]
@@ -131,6 +134,7 @@ graph LR
 ```
 
 **Content structure**:
+
 - **Testing**: Language-specific test framework, 80% coverage requirement
 - **Code style**: Language-specific conventions (Go: gofmt/goimports; TS: ESLint+Prettier)
 - **Git workflow**: Branch naming, Conventional Commits, squash-merge policy
@@ -143,14 +147,15 @@ graph LR
 
 **Agents**:
 
-| Agent | Role | Reads From | Output |
-|-------|------|-----------|--------|
-| Lint Agent | Fix code style | `AGENTS.md` | Formatted source files (language-specific) |
-| Test Agent | Write tests | `AGENTS.md` | Unit/integration test files |
-| Docs Agent | Write documentation | `AGENTS.md` | API docs, architecture guides |
-| Security Agent | Review vulnerabilities | `AGENTS.md` | Security audit report |
+| Agent          | Role                   | Reads From  | Output                                     |
+| -------------- | ---------------------- | ----------- | ------------------------------------------ |
+| Lint Agent     | Fix code style         | `AGENTS.md` | Formatted source files (language-specific) |
+| Test Agent     | Write tests            | `AGENTS.md` | Unit/integration test files                |
+| Docs Agent     | Write documentation    | `AGENTS.md` | API docs, architecture guides              |
+| Security Agent | Review vulnerabilities | `AGENTS.md` | Security audit report                      |
 
 **Invocation**:
+
 ```bash
 @copilot /lint          # Fix style issues
 @copilot /test          # Generate or fix tests
@@ -164,14 +169,15 @@ graph LR
 
 **Key files by language**:
 
-| Language | Files | Purpose |
-|----------|-------|---------|
-| **Go** | `go.mod`, `Makefile` | Module definition, build/test targets |
+| Language       | Files                                                                     | Purpose                                   |
+| -------------- | ------------------------------------------------------------------------- | ----------------------------------------- |
+| **Go**         | `go.mod`, `Makefile`                                                      | Module definition, build/test targets     |
 | **TypeScript** | `tsconfig.json`, `jest.config.js`, `eslint.config.js`, `.prettierrc.json` | Type safety, testing, linting, formatting |
-| **Python** | `pyproject.toml`, `Makefile` | Package config, build/test targets |
-| **All** | `.editorconfig`, `.vscode/settings.json` | Editor consistency |
+| **Python**     | `pyproject.toml`, `Makefile`                                              | Package config, build/test targets        |
+| **All**        | `.editorconfig`, `.vscode/settings.json`                                  | Editor consistency                        |
 
 **Configuration chain**:
+
 ```mermaid
 graph LR
     AGENTS["AGENTS.md<br/>(Defines standards)"]
@@ -190,6 +196,7 @@ graph LR
 **Pre-commit hooks**: Block secrets before they reach git.
 
 **Mechanism**:
+
 ```mermaid
 graph LR
     Dev["Developer<br/>git commit"]
@@ -208,6 +215,7 @@ graph LR
 ```
 
 **Files**:
+
 - `.github/hooks/pre-commit` — Bash script that detects patterns
 - `.gitignore` — Exclude `.env`, `*.key`, etc.
 - `.env.example` — Template for safe configuration
@@ -243,21 +251,21 @@ graph TB
 
 ## Directory structure
 
-| Path | Purpose | Contains |
-|------|---------|----------|
-| `scripts/` | Bootstrap & utilities | `scaffold-project.sh` |
-| `src/` | Application source code | TypeScript modules |
-| `src/api/` | HTTP handlers | Route controllers |
-| `src/db/` | Database layer | Models, migrations, queries |
-| `src/lib/` | Shared utilities | Logger, helpers (no side effects) |
-| `src/middleware/` | Request handlers | Auth, logging, error handling |
-| `src/services/` | Business logic | Domain-specific logic |
-| `src/types/` | Type definitions | Interfaces, enums |
-| `tests/` | Test suites | Unit, integration, e2e tests |
-| `docs/` | Documentation | Architecture, API reference |
-| `specs/` | Specifications | ADRs, RFCs |
-| `.github/` | GitHub integration | Workflows, templates, CODEOWNERS |
-| `.vscode/` | Editor config | Settings, extensions, tasks |
+| Path              | Purpose                 | Contains                          |
+| ----------------- | ----------------------- | --------------------------------- |
+| `scripts/`        | Bootstrap & utilities   | `scaffold-project.sh`             |
+| `src/`            | Application source code | TypeScript modules                |
+| `src/api/`        | HTTP handlers           | Route controllers                 |
+| `src/db/`         | Database layer          | Models, migrations, queries       |
+| `src/lib/`        | Shared utilities        | Logger, helpers (no side effects) |
+| `src/middleware/` | Request handlers        | Auth, logging, error handling     |
+| `src/services/`   | Business logic          | Domain-specific logic             |
+| `src/types/`      | Type definitions        | Interfaces, enums                 |
+| `tests/`          | Test suites             | Unit, integration, e2e tests      |
+| `docs/`           | Documentation           | Architecture, API reference       |
+| `specs/`          | Specifications          | ADRs, RFCs                        |
+| `.github/`        | GitHub integration      | Workflows, templates, CODEOWNERS  |
+| `.vscode/`        | Editor config           | Settings, extensions, tasks       |
 
 ---
 
@@ -328,13 +336,13 @@ graph LR
 
 **Root cause addressed:** Ambiguity exploitation — the model fills underspecified requirements with training priors.
 
-| File | Purpose |
-|------|---------|
-| `specs/constitution.md` | Non-negotiable values; cascades to every downstream decision |
-| `specs/requirements.md` | Gherkin-style acceptance criteria; verifiable, not vague |
-| `specs/quality-gates.md` | 4 mandatory gates before phase transitions |
-| `.specify/memory/GOVERNANCE.md` | Constitutional context pre-loaded by Spec-Kit agents |
-| `.specify/memory/ARCHITECTURE.md` | Architecture context; updated after each milestone |
+| File                              | Purpose                                                      |
+| --------------------------------- | ------------------------------------------------------------ |
+| `specs/constitution.md`           | Non-negotiable values; cascades to every downstream decision |
+| `specs/requirements.md`           | Gherkin-style acceptance criteria; verifiable, not vague     |
+| `specs/quality-gates.md`          | 4 mandatory gates before phase transitions                   |
+| `.specify/memory/GOVERNANCE.md`   | Constitutional context pre-loaded by Spec-Kit agents         |
+| `.specify/memory/ARCHITECTURE.md` | Architecture context; updated after each milestone           |
 
 **Install:** `uv tool install specify-cli --from 'git+https://github.com/github/spec-kit.git'`
 
@@ -342,12 +350,12 @@ graph LR
 
 **Root cause addressed:** Context pollution — accumulated session garbage overrides earlier decisions.
 
-| File | Purpose |
-|------|---------|
-| `.planning/ROADMAP.md` | Milestone → slice → XML task plans with explicit `<must_haves>` |
-| `.planning/DECISIONS.md` | Append-only ADR log; pre-loaded by every execution agent |
-| `.planning/KNOWLEDGE.md` | Minimal project facts (per arXiv:2602.11988) |
-| `.planning/config.json` | Model, verification commands, constitution path |
+| File                     | Purpose                                                         |
+| ------------------------ | --------------------------------------------------------------- |
+| `.planning/ROADMAP.md`   | Milestone → slice → XML task plans with explicit `<must_haves>` |
+| `.planning/DECISIONS.md` | Append-only ADR log; pre-loaded by every execution agent        |
+| `.planning/KNOWLEDGE.md` | Minimal project facts (per arXiv:2602.11988)                    |
+| `.planning/config.json`  | Model, verification commands, constitution path                 |
 
 **Key mechanism:** Fresh 200K context per subagent. Each task agent starts clean; orchestrator context stays lean.
 
@@ -357,10 +365,10 @@ graph LR
 
 **Root cause addressed:** State amnesia — multi-session work contradicts earlier decisions.
 
-| File | Purpose |
-|------|---------|
-| `.gsd/PREFERENCES.md` | Model routing per phase, budget ceiling, auto-verify commands |
-| `.gsd/gsd.db` | SQLite state machine — authoritative source of truth (not committed) |
+| File                  | Purpose                                                              |
+| --------------------- | -------------------------------------------------------------------- |
+| `.gsd/PREFERENCES.md` | Model routing per phase, budget ceiling, auto-verify commands        |
+| `.gsd/gsd.db`         | SQLite state machine — authoritative source of truth (not committed) |
 
 **Key mechanism:** All milestones, slices, tasks, and decisions live in SQLite. Markdown files are rendered projections, not runtime state.
 
@@ -381,11 +389,11 @@ No two frameworks are active simultaneously. Handoffs are file-based — no API 
 
 ### Scaffold Scripts
 
-| Script | Purpose | Files created |
-|--------|---------|--------------|
-| `scripts/create-new-project.sh` | **Main entry point** — interactive orchestrator | — |
-| `scripts/scaffold-project.sh` | Base project (dirs, AGENTS.md, agents, skills, CI/CD) | ~50 |
-| `scripts/scaffold-hybrid-framework.sh` | Three-layer hybrid framework | ~30 |
+| Script                                 | Purpose                                               | Files created |
+| -------------------------------------- | ----------------------------------------------------- | ------------- |
+| `scripts/create-new-project.sh`        | **Main entry point** — interactive orchestrator       | —             |
+| `scripts/scaffold-project.sh`          | Base project (dirs, AGENTS.md, agents, skills, CI/CD) | ~50           |
+| `scripts/scaffold-hybrid-framework.sh` | Three-layer hybrid framework                          | ~30           |
 
 ---
 
@@ -396,6 +404,7 @@ No two frameworks are active simultaneously. Handoffs are file-based — no API 
 **Decision**: Use symlinks instead of file copies for `AGENTS.md`.
 
 **Rationale**:
+
 - Avoids duplication and drift
 - Changes to AGENTS.md auto-reflect everywhere
 - No manual syncing required
@@ -415,6 +424,7 @@ No two frameworks are active simultaneously. Handoffs are file-based — no API 
 **Decision**: Script can be run multiple times safely.
 
 **Rationale**:
+
 - Developers can re-run to update scaffolding
 - No risk of accidental file loss
 - Explicit `--force` flag for overwrites
@@ -426,6 +436,7 @@ No two frameworks are active simultaneously. Handoffs are file-based — no API 
 **Decision**: Support Go, TypeScript, Python, Ruby, and C with the same scaffold.
 
 **Rationale**:
+
 - Teams choose the right language for the problem
 - Agentic workflows are language-agnostic
 - Quality gates (80% coverage, linting) apply universally

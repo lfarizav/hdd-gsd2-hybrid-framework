@@ -43,12 +43,14 @@ create-new-project.sh (MAIN ORCHESTRATOR)
 
 **Purpose**: End-to-end bootstrap of a new VS Code project with all three hybrid framework layers.
 
-**Entry Point**: 
+**Entry Point**:
+
 ```bash
 bash scripts/create-new-project.sh <project-name> [options]
 ```
 
 **Options**:
+
 - `--dir <path>` — Parent directory (default: `$HOME`)
 - `--private` — Create private GitHub repo (default)
 - `--public` — Create public GitHub repo
@@ -59,6 +61,7 @@ bash scripts/create-new-project.sh <project-name> [options]
 - `--description "<text>"` — GitHub repo description
 
 **Examples**:
+
 ```bash
 # Minimal: creates ~/my-api with private GitHub repo
 bash scripts/create-new-project.sh my-api
@@ -77,6 +80,7 @@ bash scripts/create-new-project.sh my-api --install-clis
 ```
 
 **What it does**:
+
 1. Validates prerequisites (git, node, npm, optional: gh CLI)
 2. Prompts for project name, parent directory, language, GitHub settings
 3. Creates `$PARENT_DIR/$PROJECT_NAME/` directory
@@ -88,6 +92,7 @@ bash scripts/create-new-project.sh my-api --install-clis
 9. Cleans up temporary scaffold scripts
 
 **Result**: Production-ready project with:
+
 - ✅ Full directory structure
 - ✅ Language-specific setup (TypeScript, Go, Ruby, C, Python)
 - ✅ AGENTS.md + VS Code customizations
@@ -106,6 +111,7 @@ bash scripts/create-new-project.sh my-api --install-clis
 **Interactive**: Yes, unless PROJECT_DIR and PROJECT_LANG are exported
 
 **Usage**:
+
 ```bash
 # Standalone (interactive prompts)
 bash scripts/scaffold-project.sh
@@ -118,37 +124,39 @@ bash scripts/scaffold-project.sh [--force]
 
 **What it creates**:
 
-| File / Directory | Purpose |
-|---|---|
-| `.git/` | Git repository (branch: main) |
-| `AGENTS.md` | AI agent context (minimal, non-redundant requirements) |
-| `.vscode/settings.json` | Workspace settings (formatting, linting, testing) |
-| `.vscode/extensions.json` | Recommended extensions for the team |
-| `.github/pull_request_template.md` | PR template |
-| `.github/ISSUE_TEMPLATE/bug.md` | Issue templates |
-| `.github/workflows/` | CI/CD stubs (test, build, lint) |
-| `.gitignore` | OWASP-aligned (secrets, large files, build outputs) |
-| `.env.example` | Environment variable shape (no real values) |
-| `.editorconfig` | Cross-editor formatting rules |
-| `README.md` | Project description stub |
-| `CONTRIBUTING.md` | Contribution guidelines |
-| `CHANGELOG.md` | Semantic versioning changelog |
-| `LICENSE` | MIT license (default) |
-| `package.json` | (TypeScript/Node.js only) |
-| `tsconfig.json` | (TypeScript only) |
-| `jest.config.js` | (TypeScript only) |
-| `go.mod` | (Go only) |
-| `Makefile` | (Go only) |
-| `src/`, `tests/`, `docs/`, `specs/`, `scripts/` | Standard directories |
-| `.understand-anything/` | Codebase intelligence (knowledge graph) |
+| File / Directory                                | Purpose                                                |
+| ----------------------------------------------- | ------------------------------------------------------ |
+| `.git/`                                         | Git repository (branch: main)                          |
+| `AGENTS.md`                                     | AI agent context (minimal, non-redundant requirements) |
+| `.vscode/settings.json`                         | Workspace settings (formatting, linting, testing)      |
+| `.vscode/extensions.json`                       | Recommended extensions for the team                    |
+| `.github/pull_request_template.md`              | PR template                                            |
+| `.github/ISSUE_TEMPLATE/bug.md`                 | Issue templates                                        |
+| `.github/workflows/`                            | CI/CD stubs (test, build, lint)                        |
+| `.gitignore`                                    | OWASP-aligned (secrets, large files, build outputs)    |
+| `.env.example`                                  | Environment variable shape (no real values)            |
+| `.editorconfig`                                 | Cross-editor formatting rules                          |
+| `README.md`                                     | Project description stub                               |
+| `CONTRIBUTING.md`                               | Contribution guidelines                                |
+| `CHANGELOG.md`                                  | Semantic versioning changelog                          |
+| `LICENSE`                                       | MIT license (default)                                  |
+| `package.json`                                  | (TypeScript/Node.js only)                              |
+| `tsconfig.json`                                 | (TypeScript only)                                      |
+| `jest.config.js`                                | (TypeScript only)                                      |
+| `go.mod`                                        | (Go only)                                              |
+| `Makefile`                                      | (Go only)                                              |
+| `src/`, `tests/`, `docs/`, `specs/`, `scripts/` | Standard directories                                   |
+| `.understand-anything/`                         | Codebase intelligence (knowledge graph)                |
 
 **Design Principles**:
+
 - **Idempotent**: Safe to re-run; checks for existing files
 - **Language-aware**: Creates different stubs for Go, TypeScript, Python, etc.
 - **OWASP-aligned**: Blocks secrets and binaries from git
 - **Agent-friendly**: AGENTS.md contains minimal, focused requirements (per arXiv:2602.11988)
 
 **Options**:
+
 - `--force` — Overwrite existing scaffold files (not git history or .env)
 
 ---
@@ -162,6 +170,7 @@ bash scripts/scaffold-project.sh [--force]
 **Interactive**: No (non-interactive by default)
 
 **Usage**:
+
 ```bash
 # Standalone (must be in project directory with AGENTS.md)
 cd /path/to/project
@@ -171,12 +180,14 @@ bash /path/to/scaffold-hybrid-framework.sh [options]
 ```
 
 **Options**:
+
 - `--force` — Overwrite existing scaffold files
 - `--install-clis` — Also install Spec-Kit CLI (via uv) and GSD-2 CLI (via npm)
 
 **What it creates**:
 
 #### Layer 1 — Spec-Kit (Requirements → Code)
+
 Solves: **Ambiguity at the requirements level**
 
 ```
@@ -193,6 +204,7 @@ specs/
 ```
 
 #### Layer 2 — GSD-v1 (Planning → Roadmap)
+
 Solves: **Context pollution within a session**
 
 ```
@@ -209,6 +221,7 @@ Solves: **Context pollution within a session**
 ```
 
 #### Layer 3 — GSD-2 (Execution → State Machine)
+
 Solves: **State amnesia across sessions**
 
 ```
@@ -219,6 +232,7 @@ Solves: **State amnesia across sessions**
 ```
 
 **Prerequisites Check**:
+
 - ✅ `AGENTS.md` exists (from scaffold-project.sh)
 - ✅ `uv` available (Python; optional warn if missing)
 - ✅ `npm` available (already required)
@@ -233,14 +247,17 @@ Solves: **State amnesia across sessions**
 **Purpose**: Auto-update the framework to the latest version from GitHub.
 
 **Usage**:
+
 ```bash
 bash scripts/update-framework.sh [--force]
 ```
 
 **Options**:
+
 - `--force` — Stash uncommitted changes automatically (default: prompt)
 
 **What it does**:
+
 1. Checks git status (warns if uncommitted changes)
 2. Fetches latest from origin/main
 3. Reports if updates available (behind/ahead)
@@ -251,31 +268,34 @@ bash scripts/update-framework.sh [--force]
 
 ## Language Support Matrix
 
-| Language | Tooling | Scaffolds | Notes |
-|---|---|---|---|
-| **TypeScript** | npm, Jest, ts-jest, ESLint, Prettier | `package.json`, `tsconfig.json`, `jest.config.js`, `.prettierrc` | Default option |
-| **Go** | go modules, go test, testify, gofmt, go vet | `go.mod`, `Makefile`, `cmd/`, `internal/` | Production-ready |
-| **Python** | uv, pytest, mypy, ruff | `pyproject.toml`, `Makefile`, `venv/` | Modern tooling |
-| **Ruby** | Bundler, RSpec, RuboCop | `Gemfile`, `Rakefile` | Community support |
-| **C** | Make, Unity, cppcheck, valgrind | `Makefile`, `src/`, `tests/` | Embedded systems |
+| Language       | Tooling                                     | Scaffolds                                                        | Notes             |
+| -------------- | ------------------------------------------- | ---------------------------------------------------------------- | ----------------- |
+| **TypeScript** | npm, Jest, ts-jest, ESLint, Prettier        | `package.json`, `tsconfig.json`, `jest.config.js`, `.prettierrc` | Default option    |
+| **Go**         | go modules, go test, testify, gofmt, go vet | `go.mod`, `Makefile`, `cmd/`, `internal/`                        | Production-ready  |
+| **Python**     | uv, pytest, mypy, ruff                      | `pyproject.toml`, `Makefile`, `venv/`                            | Modern tooling    |
+| **Ruby**       | Bundler, RSpec, RuboCop                     | `Gemfile`, `Rakefile`                                            | Community support |
+| **C**          | Make, Unity, cppcheck, valgrind             | `Makefile`, `src/`, `tests/`                                     | Embedded systems  |
 
 ---
 
 ## Workflow: From Project Creation to Code Execution
 
 ### Phase 0: Pre-flight
+
 ```bash
 # Check prerequisites, authenticate gh CLI
 gh auth login
 ```
 
 ### Phase 1: Create Project
+
 ```bash
 # Single command creates everything
 bash scripts/create-new-project.sh my-awesome-api --install-clis
 ```
 
 ### Phase 2: Define Specification (Spec-Kit)
+
 ```bash
 # Edit specs/ layer to capture requirements
 vi my-awesome-api/specs/requirements.md
@@ -286,6 +306,7 @@ cd my-awesome-api && npm run quality-gate:spec
 ```
 
 ### Phase 3: Plan Execution (GSD-v1)
+
 ```bash
 # Plan milestones and roadmap
 vi .planning/ROADMAP.md
@@ -295,6 +316,7 @@ npx gsd-build --phase planning --output .planning/
 ```
 
 ### Phase 4: Autonomous Execution (GSD-2)
+
 ```bash
 # Execute with state machine awareness
 npx gsd-2 --mode execute --state .gsd/gsd.db
@@ -304,6 +326,7 @@ npm run quality-gate:execution
 ```
 
 ### Phase 5: Continuous Integration
+
 ```bash
 # CI workflows (GitHub Actions) enforce gates on every push
 # .github/workflows/quality-gate.yml runs:
@@ -318,6 +341,7 @@ npm run quality-gate:execution
 ## Best Practices
 
 ### ✅ Do
+
 - Run scaffold scripts with `--force` if you need to regenerate files
 - Keep AGENTS.md minimal and focused (per arXiv:2602.11988 research)
 - Use `update-framework.sh --force` for non-interactive updates
@@ -325,6 +349,7 @@ npm run quality-gate:execution
 - Activate VS Code customizations (`AGENTS.md`, `.instructions.md`, etc.)
 
 ### 🚫 Don't
+
 - Edit `AGENTS.md` and `scaffold-*.sh` simultaneously (race condition)
 - Force-push to main after creating GitHub repo (breaks integration)
 - Delete `.understand-anything/` — it's the codebase intelligence layer
@@ -336,20 +361,26 @@ npm run quality-gate:execution
 ## Troubleshooting
 
 ### "gh CLI not found"
+
 **Solution**: Install from https://cli.github.com/, then run `gh auth login`
 
 ### "npm ERR! EACCES: permission denied"
+
 **Solution**: Use `--install-clis` flag, or manually: `uv tool install specify-cli && npm install -g gsd-pi@latest`
 
 ### "scaffold-project.sh not found"
+
 **Solution**: Ensure you're running from the framework root: `cd /home/lfarizav/hdd-gsd2-hybrid-framework`
 
 ### "Project directory already exists"
+
 **Solution**: Either:
+
 1. Choose a different name: `bash scripts/create-new-project.sh different-name`
 2. Use `--force` to overwrite: `bash scripts/create-new-project.sh my-project --force`
 
 ### "go.mod: invalid go version"
+
 **Solution**: Edit `go.mod` and update `go` version to 1.22 or later
 
 ---
@@ -366,15 +397,15 @@ npm run quality-gate:execution
 
 ## Quick Reference
 
-| Task | Command |
-|------|---------|
-| Create new project | `bash scripts/create-new-project.sh <name> [options]` |
-| Update framework | `bash scripts/update-framework.sh [--force]` |
-| Scaffold base (standalone) | `bash scripts/scaffold-project.sh [--force]` |
+| Task                         | Command                                               |
+| ---------------------------- | ----------------------------------------------------- |
+| Create new project           | `bash scripts/create-new-project.sh <name> [options]` |
+| Update framework             | `bash scripts/update-framework.sh [--force]`          |
+| Scaffold base (standalone)   | `bash scripts/scaffold-project.sh [--force]`          |
 | Scaffold hybrid (standalone) | `bash scripts/scaffold-hybrid-framework.sh [--force]` |
-| Show create help | `bash scripts/create-new-project.sh --help` |
-| List framework versions | `git log --oneline -10` |
-| Check for updates | `git fetch origin && git status` |
+| Show create help             | `bash scripts/create-new-project.sh --help`           |
+| List framework versions      | `git log --oneline -10`                               |
+| Check for updates            | `git fetch origin && git status`                      |
 
 ---
 

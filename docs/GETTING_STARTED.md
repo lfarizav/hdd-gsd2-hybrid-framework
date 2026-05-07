@@ -56,6 +56,7 @@ The script is **fully interactive** — it will prompt you for everything:
 ```
 
 **What happens automatically:**
+
 1. Framework checks for updates and pulls the latest version
 2. Creates the project directory
 3. Runs `scaffold-project.sh` — base infrastructure (80–120 files)
@@ -136,6 +137,7 @@ nano .env
 ```
 
 **`.env.example` contains**:
+
 ```env
 # Database
 DATABASE_URL=postgresql://user:pass@localhost:5432/mydb
@@ -155,6 +157,7 @@ API_KEY=your-secret-key-here
 ## Step 4: Verify setup with tests
 
 **For Go projects:**
+
 ```bash
 go test ./...
 go vet ./...
@@ -162,6 +165,7 @@ gofmt -w ./...
 ```
 
 **For TypeScript projects:**
+
 ```bash
 npm test
 npm run lint
@@ -169,6 +173,7 @@ npm run typecheck
 ```
 
 **Expected output (Go)**:
+
 ```
 ok  	github.com/OWNER/my-awesome-api/internal/...  0.123s
 coverage: 82.4% of statements
@@ -183,6 +188,7 @@ code /path/to/your-new-project
 ```
 
 **Your VS Code is now configured** with:
+
 - `.github/agents/` — docs, lint, test, security agent personas
 - `.github/skills/` — troubleshoot, agent-customization skills
 - `.vscode/` — workspace settings, recommended extensions, tasks
@@ -275,6 +281,7 @@ npm test:coverage
 ```
 
 **Result**:
+
 ```
 ✓ Logger utility passes all tests
 ✓ Coverage: 100% (exceeds 80% threshold)
@@ -287,6 +294,7 @@ npm test:coverage
 ### 1. Review project standards
 
 Read [AGENTS.md](../AGENTS.md) to understand:
+
 - Code style rules
 - Testing requirements
 - Security boundaries
@@ -469,6 +477,7 @@ bash scripts/scaffold-project.sh
 ### Issue: Tests fail with "Cannot find module"
 
 **Solution**: Ensure TypeScript is compiled:
+
 ```bash
 npm run build
 npm test
@@ -477,6 +486,7 @@ npm test
 ### Issue: ESLint complains about TypeScript syntax
 
 **Solution**: Update `.eslintrc`:
+
 ```json
 {
   "parser": "@typescript-eslint/parser",
@@ -487,6 +497,7 @@ npm test
 ### Issue: Symlinks not working on Windows
 
 **Solution**: Use Windows Subsystem for Linux (WSL) or enable developer mode:
+
 ```bash
 # In Windows (Administrator):
 fsutil behavior set SymlinkEvaluation L2L:1 1L:1
@@ -495,6 +506,7 @@ fsutil behavior set SymlinkEvaluation L2L:1 1L:1
 ### Issue: Pre-commit hook not running
 
 **Solution**: Set the hooks path:
+
 ```bash
 git config core.hooksPath .github/hooks
 chmod +x .github/hooks/pre-commit

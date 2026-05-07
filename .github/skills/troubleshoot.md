@@ -21,6 +21,7 @@ Investigate unexpected behavior by analyzing debug logs and examining tool usage
 ## Output
 
 Provide a clear analysis with:
+
 - What went wrong
 - Where it failed (file/line/step)
 - Why it happened (root cause)

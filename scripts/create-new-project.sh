@@ -233,20 +233,20 @@ step "── Step 1: Check framework updates ───────────�
 
 if git -C "$FRAMEWORK_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
   info "Fetching latest framework version from origin..."
-  
+
   CURRENT_COMMIT=$(git -C "$FRAMEWORK_ROOT" rev-parse --short HEAD)
   CURRENT_BRANCH=$(git -C "$FRAMEWORK_ROOT" rev-parse --abbrev-ref HEAD)
-  
+
   # Fetch latest without pulling (non-invasive)
   git -C "$FRAMEWORK_ROOT" fetch origin main 2>/dev/null || warn "Could not fetch framework updates (network issue?)"
-  
+
   # Check if we're behind
   BEHIND=$(git -C "$FRAMEWORK_ROOT" rev-list --count main..origin/main 2>/dev/null || echo "0")
-  
+
   if [[ "$BEHIND" -gt 0 ]]; then
     warn "Framework is $BEHIND commit(s) behind origin/main"
     warn "Pulling latest updates..."
-    
+
     if git -C "$FRAMEWORK_ROOT" pull origin main >/dev/null 2>&1; then
       LATEST_COMMIT=$(git -C "$FRAMEWORK_ROOT" rev-parse --short HEAD)
       success "Framework updated ($CURRENT_COMMIT → $LATEST_COMMIT)"

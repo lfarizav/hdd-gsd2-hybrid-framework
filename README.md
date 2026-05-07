@@ -42,6 +42,7 @@ code /path/to/your-new-project
 # 4. Fill in the constitution (required before planning)
 # Edit specs/constitution.md — replace all placeholder text
 ```
+
 ```
 
 ## Hybrid Framework: Spec-Kit + GSD-v1 + GSD-2
@@ -59,12 +60,15 @@ This project implements a **three-layer hybrid framework** for enterprise-grade 
 ### Quick Overview
 
 ```
-Spec-Kit (Define)  →  GSD-v1 (Plan)  →  GSD-2 (Execute)
-   ↓                     ↓                   ↓
-Specifications      Context-              Autonomous
-+ Constitution      Engineered            Building
-+ Quality Gates     Planning
-```
+
+Spec-Kit (Define) → GSD-v1 (Plan) → GSD-2 (Execute)
+↓ ↓ ↓
+Specifications Context- Autonomous
+
+- Constitution Engineered Building
+- Quality Gates Planning
+
+````
 
 **Example workflow:**
 ```bash
@@ -79,9 +83,10 @@ gsd /gsd auto
 
 # 4. Verify: Compliance gates
 spec-kit gate verify-artifacts
-```
+````
 
 See [HYBRID_FRAMEWORK_GUIDE.md](HYBRID_FRAMEWORK_GUIDE.md) for:
+
 - 📖 Deep dives on each framework
 - 🔗 Integration patterns (layer-to-layer)
 - 👥 Team collaboration workflows
@@ -100,6 +105,7 @@ bash scripts/create-new-project.sh
 ```
 
 The script prompts you interactively and then:
+
 1. Checks for framework updates and pulls the latest
 2. Calls `scaffold-project.sh` — creates base infrastructure
 3. Calls `scaffold-hybrid-framework.sh` — adds hybrid framework layers
@@ -107,6 +113,7 @@ The script prompts you interactively and then:
 5. _(optional)_ Creates a GitHub repo
 
 **Need to update the framework itself?**
+
 ```bash
 bash scripts/update-framework.sh
 ```
@@ -115,16 +122,16 @@ bash scripts/update-framework.sh
 
 **80–120 files across all categories:**
 
-| Category | Files | Purpose |
-|----------|-------|---------|
-| **Instructions** | `AGENTS.md`, `CLAUDE.md`, `.instructions.md`, `.github/copilot-instructions.md` (symlinks) | Single source of truth for all AI agents — minimal, research-backed requirements per arXiv:2602.11988 |
-| **Agent personas** | `.github/agents/docs-agent.md`, `lint-agent.md`, `test-agent.md`, `security-agent.md` | Domain-specific AI agent roles |
-| **Skills** | `.github/skills/troubleshoot.md`, `agent-customization.md` | Custom GitHub Copilot skills |
-| **Security** | `.gitignore`, `.env.example`, `.github/hooks/pre-commit` | OWASP A02 secrets protection |
-| **GitHub** | PR template, issue templates, workflows (CI/CD, security), CODEOWNERS | Standardised collaboration and automation |
-| **VS Code** | `settings.json`, `extensions.json`, `tasks.json`, `.editorconfig` | Consistent editor experience |
-| **Language tooling** | Language-specific config (Go: `go.mod`+`Makefile`; TS: `tsconfig.json`+`jest.config.js`; etc.) | Per-language build, test, lint setup |
-| **Documentation** | `CONTRIBUTING.md`, `README.md`, `CHANGELOG.md`, `LICENSE` | Developer onboarding and project standards |
+| Category             | Files                                                                                          | Purpose                                                                                               |
+| -------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Instructions**     | `AGENTS.md`, `CLAUDE.md`, `.instructions.md`, `.github/copilot-instructions.md` (symlinks)     | Single source of truth for all AI agents — minimal, research-backed requirements per arXiv:2602.11988 |
+| **Agent personas**   | `.github/agents/docs-agent.md`, `lint-agent.md`, `test-agent.md`, `security-agent.md`          | Domain-specific AI agent roles                                                                        |
+| **Skills**           | `.github/skills/troubleshoot.md`, `agent-customization.md`                                     | Custom GitHub Copilot skills                                                                          |
+| **Security**         | `.gitignore`, `.env.example`, `.github/hooks/pre-commit`                                       | OWASP A02 secrets protection                                                                          |
+| **GitHub**           | PR template, issue templates, workflows (CI/CD, security), CODEOWNERS                          | Standardised collaboration and automation                                                             |
+| **VS Code**          | `settings.json`, `extensions.json`, `tasks.json`, `.editorconfig`                              | Consistent editor experience                                                                          |
+| **Language tooling** | Language-specific config (Go: `go.mod`+`Makefile`; TS: `tsconfig.json`+`jest.config.js`; etc.) | Per-language build, test, lint setup                                                                  |
+| **Documentation**    | `CONTRIBUTING.md`, `README.md`, `CHANGELOG.md`, `LICENSE`                                      | Developer onboarding and project standards                                                            |
 
 ### Key features
 
@@ -144,12 +151,13 @@ According to Wikipedia:
 
 **Comparison:**
 
-| Approach | Issues |
-|----------|--------|
-| **File with link reference** (e.g., "See AGENTS.md") | Creates duplication, drift risk, manual updates needed |
-| **Symlinks (current)** | Single authoritative file; changes auto-reflect; tools unaware of link overhead |
+| Approach                                             | Issues                                                                          |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **File with link reference** (e.g., "See AGENTS.md") | Creates duplication, drift risk, manual updates needed                          |
+| **Symlinks (current)**                               | Single authoritative file; changes auto-reflect; tools unaware of link overhead |
 
 **Implementation:**
+
 ```bash
 # All three symlinks point to the same file
 CLAUDE.md → AGENTS.md
@@ -171,11 +179,11 @@ When any tool reads `.github/copilot-instructions.md`, the OS automatically reso
 
 **15 framework files across 3 layers:**
 
-| Layer | Files | Purpose |
-|-------|-------|------|
-| **Spec-Kit** (Definition) | `specs/constitution.md`, `specs/requirements.md`, `specs/quality-gates.md`, `.specify/memory/GOVERNANCE.md`, `.specify/memory/ARCHITECTURE.md` | Executable specifications, constitutional governance, 4-gate quality system |
-| **GSD-v1** (Planning) | `.planning/config.json`, `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`, `.planning/ROADMAP.md`, `.planning/STATE.md`, `.planning/DECISIONS.md`, `.planning/KNOWLEDGE.md` | Context-engineered planning, append-only decision log, knowledge base |
-| **GSD-2** (Execution) | `.gsd/PREFERENCES.md` | Model routing per phase, budget ceiling, auto-verify commands, stuck detection |
+| Layer                     | Files                                                                                                                                                                          | Purpose                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| **Spec-Kit** (Definition) | `specs/constitution.md`, `specs/requirements.md`, `specs/quality-gates.md`, `.specify/memory/GOVERNANCE.md`, `.specify/memory/ARCHITECTURE.md`                                 | Executable specifications, constitutional governance, 4-gate quality system    |
+| **GSD-v1** (Planning)     | `.planning/config.json`, `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`, `.planning/ROADMAP.md`, `.planning/STATE.md`, `.planning/DECISIONS.md`, `.planning/KNOWLEDGE.md` | Context-engineered planning, append-only decision log, knowledge base          |
+| **GSD-2** (Execution)     | `.gsd/PREFERENCES.md`                                                                                                                                                          | Model routing per phase, budget ceiling, auto-verify commands, stuck detection |
 
 ---
 
@@ -327,17 +335,17 @@ graph TB
 
 ## Key benefits for agentic engineering teams
 
-| Benefit | Impact | Why it matters |
-|---------|--------|----------------|
-| **No setup overhead** | Start coding in 5 min | Focus on business logic, not config |
-| **Multi-language** | Go, TS, Python, Ruby, C | Pick the right tool for the job |
-| **Unified agent guidance** | All tools follow same rules | Consistency across Copilot, Claude, Cursor |
-| **Agent personas** | `.github/agents/` — 4 roles | Docs, lint, test, security agents ready |
-| **Custom skills** | `.github/skills/` | Troubleshoot and agent-customization skills |
-| **Security by default** | Pre-commit blocks secrets | OWASP A02 hardened; no credential leaks |
-| **Tested from day 1** | 80% coverage enforced | Confidence in every deployment |
-| **Auto-updated** | Framework updates before scaffold | Always uses latest patterns |
-| **Minimal instructions** | Agents stay focused | Research shows excessive instructions reduce success by >20% |
+| Benefit                    | Impact                            | Why it matters                                               |
+| -------------------------- | --------------------------------- | ------------------------------------------------------------ |
+| **No setup overhead**      | Start coding in 5 min             | Focus on business logic, not config                          |
+| **Multi-language**         | Go, TS, Python, Ruby, C           | Pick the right tool for the job                              |
+| **Unified agent guidance** | All tools follow same rules       | Consistency across Copilot, Claude, Cursor                   |
+| **Agent personas**         | `.github/agents/` — 4 roles       | Docs, lint, test, security agents ready                      |
+| **Custom skills**          | `.github/skills/`                 | Troubleshoot and agent-customization skills                  |
+| **Security by default**    | Pre-commit blocks secrets         | OWASP A02 hardened; no credential leaks                      |
+| **Tested from day 1**      | 80% coverage enforced             | Confidence in every deployment                               |
+| **Auto-updated**           | Framework updates before scaffold | Always uses latest patterns                                  |
+| **Minimal instructions**   | Agents stay focused               | Research shows excessive instructions reduce success by >20% |
 
 ---
 
@@ -347,27 +355,32 @@ graph TB
 <summary><strong>Key files created in every project</strong></summary>
 
 **Instructions** (Single source of truth via symlinks)
+
 - `AGENTS.md` — Authoritative agent guidance
 - `CLAUDE.md` → `AGENTS.md` (symlink)
 - `.instructions.md` → `AGENTS.md` (symlink)
 - `.github/copilot-instructions.md` → `../../AGENTS.md` (symlink)
 
 **Agent Personas**
+
 - `.github/agents/docs-agent.md` — Documentation writing agent
 - `.github/agents/lint-agent.md` — Code style enforcement agent
 - `.github/agents/test-agent.md` — Test writing and coverage agent
 - `.github/agents/security-agent.md` — OWASP security review agent
 
 **Skills**
+
 - `.github/skills/troubleshoot.md` — Debug unexpected behavior
 - `.github/skills/agent-customization.md` — Manage agent files safely
 
 **Security**
+
 - `.gitignore` — Secrets, keys, binaries blocked
 - `.env.example` — Environment variables template
 - `.github/hooks/pre-commit` — Block secrets before commit
 
 **GitHub Automation**
+
 - `.github/workflows/ci.yml` — CI/CD pipeline
 - `.github/workflows/security.yml` — Security scanning
 - `.github/PULL_REQUEST_TEMPLATE.md` — Standard PR format
@@ -375,12 +388,14 @@ graph TB
 - `.github/CODEOWNERS` — Code ownership rules
 
 **VS Code Configuration**
+
 - `.vscode/settings.json` — Formatter, linter settings
 - `.vscode/extensions.json` — Recommended extensions
 - `.vscode/tasks.json` — Build, test, lint tasks
 - `.editorconfig` — Editor settings
 
 **Hybrid Framework**
+
 - `specs/` — Spec-Kit layer (constitution, requirements, quality gates)
 - `.planning/` — GSD-v1 layer (project state, roadmap, decisions)
 - `.gsd/` — GSD-2 layer (preferences, model routing)
@@ -406,16 +421,19 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full development workflow.
 ## Documentation
 
 ### Getting Started
+
 - **[Getting Started Guide](docs/GETTING_STARTED.md)** — Step-by-step setup including hybrid framework
 - **[Why Use This?](docs/WHY_USE_THIS.md)** — Benefits and ROI analysis
 - **[Quick Start](#quick-start)** — Clone, scaffold, run tests (above)
 
 ### Hybrid Framework
+
 - **[Hybrid Framework Guide](HYBRID_FRAMEWORK_GUIDE.md)** — Full integration guide (Spec-Kit + GSD-v1 + GSD-2)
 - **[Feasibility Study](docs/FEASIBILITY_STUDY.md)** — Research-backed case for the hybrid + hallucination analysis
 - **[GSD-v1 → GSD-2 Evolution](docs/GSD-V1-TO-V2-EVOLUTION.md)** — How the two GSD frameworks differ
 
 ### Project Reference
+
 - **[Architecture](docs/architecture.md)** — System design, components, and hybrid layer model
 - **[API Reference](docs/api.md)** — Generated API documentation
 - **[Contributing](CONTRIBUTING.md)** — Development workflow and standards
@@ -423,6 +441,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full development workflow.
 - **[Changelog](CHANGELOG.md)** — Version history
 
 ### Resources
+
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/) — Language reference
 - [Jest Documentation](https://jestjs.io/docs/getting-started) — Testing framework
 - [Conventional Commits](https://www.conventionalcommits.org/) — Commit message standard
@@ -446,5 +465,6 @@ Designed to help developers and teams accelerate their journey into agentic engi
 
 ---
 
-**Get started now** →  `bash scripts/scaffold-project.sh` ⚡
+**Get started now** → `bash scripts/scaffold-project.sh` ⚡
+
 # hdd-gsd2-hybrid-framework

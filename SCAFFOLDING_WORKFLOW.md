@@ -35,24 +35,26 @@ create-new-project.sh (YOU ARE HERE)
 
 ### The 4 Scripts
 
-| Script | Purpose | When to Use | Called By |
-|--------|---------|-----------|-----------|
-| **create-new-project.sh** | **Main entry point** — orchestrates everything | Every new project | You (user) |
-| scaffold-project.sh | Creates base infrastructure | Standalone if you need raw project | create-new-project.sh |
-| scaffold-hybrid-framework.sh | Adds hybrid framework layers | Standalone for existing projects | create-new-project.sh |
-| update-framework.sh | Updates framework to latest version | Periodic maintenance | You (user) |
+| Script                       | Purpose                                        | When to Use                        | Called By             |
+| ---------------------------- | ---------------------------------------------- | ---------------------------------- | --------------------- |
+| **create-new-project.sh**    | **Main entry point** — orchestrates everything | Every new project                  | You (user)            |
+| scaffold-project.sh          | Creates base infrastructure                    | Standalone if you need raw project | create-new-project.sh |
+| scaffold-hybrid-framework.sh | Adds hybrid framework layers                   | Standalone for existing projects   | create-new-project.sh |
+| update-framework.sh          | Updates framework to latest version            | Periodic maintenance               | You (user)            |
 
 ---
 
 ## Step-by-Step Execution Flow
 
 ### Step 0: Auto-Update Framework (create-new-project.sh)
+
 ```bash
 # Pulls latest framework changes before scaffolding:
 bash scripts/update-framework.sh
 ```
 
 ### Step 1: Interactive Prompts (create-new-project.sh)
+
 ```bash
 # Prompts collected (no positional arguments):
 # - Project name
@@ -62,7 +64,9 @@ bash scripts/update-framework.sh
 ```
 
 ### Step 2: Run scaffold-project.sh
+
 **What it creates:**
+
 - Git repo (branch: main)
 - Directory structure: `src/`, `tests/`, `docs/`, `specs/`, `scripts/`
 - AGENTS.md (AI agent context)
@@ -82,7 +86,9 @@ bash scripts/update-framework.sh
 **Files created: ~30-50 depending on language**
 
 ### Step 3: Run scaffold-hybrid-framework.sh
+
 **Layer 1 — Spec-Kit (Specification-driven development)**
+
 ```
 specs/
 ├── constitution.md          # Project identity
@@ -96,6 +102,7 @@ specs/
 ```
 
 **Layer 2 — GSD-v1 (Planning & context engineering)**
+
 ```
 .planning/
 ├── config.json             # Project metadata
@@ -109,6 +116,7 @@ specs/
 ```
 
 **Layer 3 — GSD-2 (Autonomous execution)**
+
 ```
 .gsd/
 ├── PREFERENCES.md          # Agent preferences
@@ -117,6 +125,7 @@ specs/
 ```
 
 **Additional VS Code customizations:**
+
 ```
 .github/
 ├── agents/                 # fix-agent.agent.md, lint-agent.agent.md
@@ -128,6 +137,7 @@ specs/
 ```
 
 ### Step 4: Agent Personas + Skills (scaffold-project.sh)
+
 ```bash
 # Writes to .github/agents/:
 #   docs-agent.md, lint-agent.md, test-agent.md, security-agent.md
@@ -136,6 +146,7 @@ specs/
 ```
 
 ### Step 5: Placeholder Substitution (create-new-project.sh)
+
 ```bash
 # Replace generic placeholders with real values:
 PROJECT_NAME → my-awesome-api
@@ -145,6 +156,7 @@ GITHUB_USER → (detected from gh auth)
 ```
 
 ### Step 6: GitHub Integration (create-new-project.sh)
+
 ```bash
 # If gh CLI available and authenticated:
 gh repo create $OWNER/$PROJECT_NAME --${VISIBILITY} --description "..."
@@ -245,6 +257,7 @@ project-name/
 ## Quality Gates: What's Checked
 
 ### Gate 1: Specification Completeness ✅
+
 - `specs/constitution.md` exists
 - `specs/requirements.md` exists
 - `specs/features/` directory with at least one feature
@@ -252,6 +265,7 @@ project-name/
 - Gherkin scenarios in requirements
 
 ### Gate 2: Planning Completeness ✅
+
 - `.planning/PROJECT.md` references M001 (milestones)
 - `.planning/ROADMAP.md` has Slices (S01, S02...)
 - `.planning/ROADMAP.md` has Tasks (T1, T2...)
@@ -259,6 +273,7 @@ project-name/
 - `.gsd/PREFERENCES.md` exists
 
 ### Gate 3: Execution Completeness ✅ (Language-dependent)
+
 - **Go**: `go test -race ./... ` exits 0
 - **Go**: Coverage ≥80% (checked with `go tool cover`)
 - **Go**: `go vet ./...` passes
@@ -273,6 +288,7 @@ project-name/
 ## Command Cheat Sheet
 
 ### Creating Projects
+
 ```bash
 # Always fully interactive — prompts for everything
 # Run from the framework directory:
@@ -286,6 +302,7 @@ bash scripts/create-new-project.sh --help
 ```
 
 ### Framework Maintenance
+
 ```bash
 # Check for updates
 cd ~/my-api
@@ -300,6 +317,7 @@ bash scripts/update-framework.sh
 ```
 
 ### Language-Specific
+
 ```bash
 # Go projects
 cd ~/my-api
@@ -325,6 +343,7 @@ ruff check .              # Lint
 ## Workflow: From Idea to Production
 
 ### Phase 1: Create (5 minutes)
+
 ```bash
 bash scripts/create-new-project.sh my-api --install-clis
 cd my-api
@@ -332,6 +351,7 @@ git log --oneline -5  # See scaffolded commits
 ```
 
 ### Phase 2: Specify (1-2 hours)
+
 ```bash
 # Edit specs/requirements.md with user stories
 # Edit specs/features/FEAT-001-*.md with acceptance criteria
@@ -340,6 +360,7 @@ npm run quality-gate:spec  # or go run cmd/quality-gate/main.go gate1
 ```
 
 ### Phase 3: Plan (30 minutes)
+
 ```bash
 # Edit .planning/ROADMAP.md with milestones and tasks
 # Create .planning/DECISIONS.md for design decisions
@@ -348,6 +369,7 @@ npm run quality-gate:planning  # or go run cmd/quality-gate/main.go gate2
 ```
 
 ### Phase 4: Execute (2-3 days)
+
 ```bash
 # Autonomous execution with GSD-2
 npx gsd-2 --mode execute --state .gsd/gsd.db
@@ -366,6 +388,7 @@ npx gsd-2 --mode execute --state .gsd/gsd.db
 ```
 
 ### Phase 5: Release
+
 ```bash
 # Tag a release
 git tag v1.0.0
@@ -382,33 +405,43 @@ git push origin v1.0.0
 ## Troubleshooting
 
 ### "Command not found: scaffold-project.sh"
+
 **Solution**: Ensure you're in the framework directory:
+
 ```bash
 cd /home/lfarizav/hdd-gsd2-hybrid-framework
 bash scripts/create-new-project.sh my-api
 ```
 
 ### "gh CLI not found"
+
 **Solution**: Install from https://cli.github.com/ and authenticate:
+
 ```bash
 gh auth login
 ```
 
 ### "npm ERR! EACCES: permission denied"
+
 **Solution**: Use `--install-clis` to let npm handle permissions, or:
+
 ```bash
 npm install -g gsd-pi@latest
 uv tool install specify-cli
 ```
 
 ### "Project directory already exists"
+
 **Solution**: Use `--force` to overwrite:
+
 ```bash
 bash scripts/create-new-project.sh my-api --force
 ```
 
 ### "go.mod: invalid go version"
+
 **Solution**: Edit `go.mod` and update to Go 1.22+:
+
 ```bash
 go mod edit -go=1.22
 ```
@@ -418,25 +451,30 @@ go mod edit -go=1.22
 ## Design Principles (Why This Approach?)
 
 ### 1. **Research-Backed** (arXiv:2602.11988)
+
 - AGENTS.md contains minimal, non-redundant requirements
 - Unnecessary instructions reduce LLM task-success by 3% and cost by 20%+
 
 ### 2. **Layered Architecture**
+
 - **Spec-Kit** → Solves: Ambiguity at requirements level
 - **GSD-v1** → Solves: Context pollution within a session
 - **GSD-2** → Solves: State amnesia across sessions
 
 ### 3. **Language-Agnostic**
+
 - One framework works for Go, TypeScript, Python, Ruby, C
 - Language-specific configuration is automatic
 
 ### 4. **Quality-Gate Driven**
+
 - Gate 1: Specification completeness
 - Gate 2: Planning completeness
 - Gate 3: Execution completeness (testing, linting, coverage)
 - All gates automated and CI-enforced
 
 ### 5. **VS Code First**
+
 - AGENTS.md is the single source of truth for AI agents
 - VS Code customizations (agents, instructions, skills, hooks) are version-controlled
 - Team sees consistent AI assistance across all projects
@@ -446,11 +484,13 @@ go mod edit -go=1.22
 ## Next Steps
 
 1. **Create your first project:**
+
    ```bash
    bash scripts/create-new-project.sh
    ```
 
 2. **Update framework periodically:**
+
    ```bash
    bash scripts/update-framework.sh
    ```
@@ -465,6 +505,7 @@ go mod edit -go=1.22
 **Made with ❤️ by Luis Felipe Ariza Vesga**
 
 The scaffolding system is designed to eliminate setup friction and ensure every project starts with:
+
 - ✅ Specification-driven development (Spec-Kit)
 - ✅ Atomic planning (GSD-v1)
 - ✅ Autonomous execution (GSD-2)

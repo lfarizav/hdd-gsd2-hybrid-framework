@@ -41,7 +41,7 @@ echo ""
 echo "[2/5] Checking for uncommitted changes..."
 if ! git diff-index --quiet HEAD --; then
     echo "⚠️  Uncommitted changes detected."
-    
+
     if [ "$FORCE" == "--force" ]; then
         echo "    [--force] Stashing changes automatically..."
         STASH_ID=$(git stash push -m "auto-update-$(date +%s)" | grep -oP 'Saved working directory' && echo "stashed")
