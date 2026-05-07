@@ -1,6 +1,6 @@
 # Agentic Engineering Scaffolding for VS Code
 
-> A **complete TypeScript project template** designed to help developers **start working with agentic engineering** in Visual Studio Code. It provides production-ready configurations, AI agent instructions, security hardening, and best practices—all bootstrapped with a single idempotent script.
+> A **multi-language project scaffolding system** designed to help developers **start working with agentic engineering** in Visual Studio Code. It provides production-ready configurations, AI agent instructions, security hardening, and best practices — all bootstrapped with a single interactive command.
 
 [![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -12,42 +12,36 @@
 
 This project is your **starting point for agentic engineering with AI assistants** (GitHub Copilot, Claude Code, Cursor, Windsurf). It eliminates days of setup and configuration by providing:
 
-✅ **One-command project initialization** — 51+ files configured automatically
+✅ **One-command project initialization** — 80–120 files configured automatically
+✅ **Multi-language** — Go, TypeScript, Python, Ruby, C (select interactively)
 ✅ **Unified agent instructions** — GitHub Copilot, Claude, and other AI tools read the same guidance
+✅ **Agent personas** — `.github/agents/` with docs, lint, test, security roles
+✅ **Custom skills** — `.github/skills/` with troubleshoot and agent-customization skills
 ✅ **Security hardened** — Pre-commit hooks block secrets; OWASP A02 best practices
-✅ **TypeScript strict mode** — Full type safety from day one
-✅ **80% test coverage threshold** — Jest + ts-jest pre-configured
-✅ **Code quality gates** — ESLint, Prettier, type-checking automated
-✅ **GitHub workflows** — CI/CD, security scanning, agent personas ready
+✅ **80% test coverage threshold** — per-language test setup pre-configured
+✅ **GitHub workflows** — CI/CD, security scanning ready
 ✅ **VS Code optimized** — Settings, extensions list, tasks configured
+✅ **Auto-update** — Framework updates itself before scaffolding each project
 
 ---
 
 ## Quick start
 
 ```bash
-# 1. Clone and install
-git clone https://github.com/OWNER/REPO.git
-cd REPO
-npm install
+# 1. Clone the framework
+git clone https://github.com/lfarizav/hdd-gsd2-hybrid-framework.git
+cd hdd-gsd2-hybrid-framework
 
-# 2. Run the base scaffold (creates 51+ project files)
-bash scripts/scaffold-project.sh
+# 2. Create a new project (fully interactive)
+bash scripts/create-new-project.sh
+# Prompts: project name → parent dir → language → GitHub options
 
-# 3. Install the hybrid framework (Spec-Kit + GSD-v1 + GSD-2)
-bash scripts/scaffold-hybrid-framework.sh
-# Optional: also install the CLIs
-bash scripts/scaffold-hybrid-framework.sh --install-clis
+# 3. Open your new project
+code /path/to/your-new-project
 
-# 4. Configure environment
-cp .env.example .env
-# Edit .env and fill in real values
-
-# 5. Fill in the constitution (required before planning)
+# 4. Fill in the constitution (required before planning)
 # Edit specs/constitution.md — replace all placeholder text
-
-# 6. Run tests
-npm test
+```
 ```
 
 ## Hybrid Framework: Spec-Kit + GSD-v1 + GSD-2
@@ -97,35 +91,40 @@ See [HYBRID_FRAMEWORK_GUIDE.md](HYBRID_FRAMEWORK_GUIDE.md) for:
 
 ## Project Scaffold
 
-This project is **fully bootstrapped** using two idempotent scripts. Run them in order: the base scaffold first, then the hybrid framework scaffold.
+All scaffolding is done through **one interactive command**: `create-new-project.sh`. It orchestrates everything automatically.
 
-### Run the scaffolds
+### Run the scaffold
 
 ```bash
-# Step 1 — Base project (TypeScript, tests, CI/CD, agent instructions)
-bash scripts/scaffold-project.sh          # First run — creates 51+ project files
-bash scripts/scaffold-project.sh --force  # Re-run — overwrites existing files
-
-# Step 2 — Hybrid framework (Spec-Kit + GSD-v1 + GSD-2)
-bash scripts/scaffold-hybrid-framework.sh                # Create framework files
-bash scripts/scaffold-hybrid-framework.sh --force        # Overwrite existing
-bash scripts/scaffold-hybrid-framework.sh --install-clis # Also install CLIs
+bash scripts/create-new-project.sh
 ```
 
-### What `scaffold-project.sh` creates
+The script prompts you interactively and then:
+1. Checks for framework updates and pulls the latest
+2. Calls `scaffold-project.sh` — creates base infrastructure
+3. Calls `scaffold-hybrid-framework.sh` — adds hybrid framework layers
+4. Makes an initial git commit
+5. _(optional)_ Creates a GitHub repo
 
-**51+ files across 8 categories:**
+**Need to update the framework itself?**
+```bash
+bash scripts/update-framework.sh
+```
+
+### What gets created
+
+**80–120 files across all categories:**
 
 | Category | Files | Purpose |
 |----------|-------|---------|
 | **Instructions** | `AGENTS.md`, `CLAUDE.md`, `.instructions.md`, `.github/copilot-instructions.md` (symlinks) | Single source of truth for all AI agents — minimal, research-backed requirements per arXiv:2602.11988 |
-| **Security** | `.gitignore`, `.env.example`, `.github/hooks/pre-commit` | OWASP A02 secrets protection; pre-commit hook blocks accidental commits |
-| **GitHub** | PR template, issue templates (bug/feature), workflows (CI/CD, security), CODEOWNERS, agent personas | Standardised collaboration and automation |
-| **VS Code** | `settings.json`, `extensions.json`, `tasks.json`, `.editorconfig` | Consistent editor experience across all developers |
-| **TypeScript tooling** | `tsconfig.json`, `jest.config.js`, `eslint.config.js`, `.prettierrc.json` | Strict mode, 80% coverage threshold, standardised code style |
-| **Source code** | `src/lib/logger.ts`, `src/types/index.ts`, directory structure | Functional patterns, typed utilities |
-| **Tests** | `tests/unit/logger.test.ts`, test directories | Example Jest test following best practices |
-| **Documentation** | `CONTRIBUTING.md`, `docs/architecture.md`, `docs/api.md`, `specs/`, `CHANGELOG.md`, `LICENSE` | Developer onboarding and project standards |
+| **Agent personas** | `.github/agents/docs-agent.md`, `lint-agent.md`, `test-agent.md`, `security-agent.md` | Domain-specific AI agent roles |
+| **Skills** | `.github/skills/troubleshoot.md`, `agent-customization.md` | Custom GitHub Copilot skills |
+| **Security** | `.gitignore`, `.env.example`, `.github/hooks/pre-commit` | OWASP A02 secrets protection |
+| **GitHub** | PR template, issue templates, workflows (CI/CD, security), CODEOWNERS | Standardised collaboration and automation |
+| **VS Code** | `settings.json`, `extensions.json`, `tasks.json`, `.editorconfig` | Consistent editor experience |
+| **Language tooling** | Language-specific config (Go: `go.mod`+`Makefile`; TS: `tsconfig.json`+`jest.config.js`; etc.) | Per-language build, test, lint setup |
+| **Documentation** | `CONTRIBUTING.md`, `README.md`, `CHANGELOG.md`, `LICENSE` | Developer onboarding and project standards |
 
 ### Key features
 
@@ -163,8 +162,9 @@ When any tool reads `.github/copilot-instructions.md`, the OS automatically reso
 - **One source of truth**: AGENTS.md + 3 symlinks (CLAUDE.md, .instructions.md, .github/copilot-instructions.md) — all tools read the same file
 - **Minimal, research-backed**: Per arXiv:2602.11988 (Gloaguen et al.), excessive instructions reduce agent task-success by >20%; only essential requirements included
 - **Idempotent**: Run multiple times safely; `--force` overwrites, skips unchanged files
-- **OWASP A02 hardened**: Pre-commit hook blocks secrets (API keys, certificates, credentials) automatically
+- **OWASP A02 hardened**: Pre-commit hook blocks secrets (API keys, certificates, tokens) automatically
 - **Agent personas**: Specialised agents for testing, linting, docs, and security in `.github/agents/`
+- **Custom skills**: Reusable Copilot skills in `.github/skills/` for troubleshooting and agent customization
 - **Prompt templates**: Reusable guidance in `.github/prompts/` for consistent agent-assisted workflows
 
 ### What `scaffold-hybrid-framework.sh` creates
@@ -207,8 +207,8 @@ This scaffold **eliminates setup friction**:
 
 ```mermaid
 graph LR
-    A["Clone repository"] --> B["Run scaffold script"]
-    B --> C["51+ files created"]
+    A["Clone framework"] --> B["Run create-new-project.sh"]
+    B --> C["80–120 files created"]
     C --> D["Ready to code in<br/>5 minutes ⚡"]
 
     style A fill:#51cf66,color:#fff
@@ -234,7 +234,7 @@ graph TB
         SYMLINKS["Symlinks<br/>CLAUDE.md<br/>.instructions.md<br/>copilot-instructions.md"]
     end
 
-    subgraph Specialists["🎯 Specialist Agents"]
+    subgraph Specialists["🎯 Specialist Agents (.github/agents/)"]
         Lint["Lint Agent<br/>code style"]
         Test["Test Agent<br/>coverage"]
         Docs["Docs Agent<br/>API & guides"]
@@ -282,52 +282,45 @@ copilot /security
 ```mermaid
 graph TB
     subgraph Root["📦 Project Root"]
-        Scripts["scripts/<br/>scaffold-project.sh"]
-        Config["Configuration Files<br/>tsconfig.json<br/>jest.config.js<br/>eslint.config.js"]
+        Scripts["scripts/<br/>create-new-project.sh"]
+        Config["Configuration Files<br/>language-specific"]
         Agents["AGENTS.md<br/>(Central guidance)"]
     end
 
+    subgraph GHFolder[".github/"]
+        AgentFiles["agents/<br/>docs lint test security"]
+        SkillFiles["skills/<br/>troubleshoot agent-customization"]
+        Workflows["workflows/<br/>ci.yml security.yml"]
+    end
+
     subgraph Code["💻 Source Code"]
-        Src["src/<br/>lib/logger.ts<br/>types/index.ts<br/>services/<br/>middleware/"]
+        Src["src/ or cmd/internal/<br/>(language-specific)"]
     end
 
     subgraph Quality["🧪 Quality Assurance"]
         Tests["tests/<br/>unit/<br/>integration/<br/>e2e/"]
-        Lint["ESLint +<br/>Prettier"]
-        TypeCheck["TypeScript<br/>strict mode"]
+        Lint["Language linter"]
+        TypeCheck["Static analysis"]
     end
 
-    subgraph Collab["🤝 Collaboration"]
-        GitHub["GitHub Actions<br/>CI/CD<br/>Security scans"]
-        PRTemplate["PR Templates<br/>Issue templates"]
-        Contributing["CONTRIBUTING.md<br/>CODEOWNERS"]
-    end
-
-    subgraph Security["🔐 Security"]
-        PreCommit["Pre-commit hooks<br/>Block secrets"]
-        Env[".env.example<br/>Environment config"]
-    end
-
-    subgraph Docs["📚 Documentation"]
-        Architecture["docs/architecture.md"]
-        API["docs/api.md"]
-        ADRs["specs/adr/"]
+    subgraph Hybrid["🔀 Hybrid Framework"]
+        Spec["specs/<br/>Spec-Kit layer"]
+        Plan[".planning/<br/>GSD-v1 layer"]
+        Exec[".gsd/<br/>GSD-2 layer"]
     end
 
     Scripts -->|creates| Code
     Scripts -->|creates| Quality
-    Scripts -->|creates| Collab
-    Scripts -->|creates| Security
-    Scripts -->|creates| Docs
+    Scripts -->|creates| GHFolder
+    Scripts -->|creates| Hybrid
     Agents -.->|guides all| Quality
     Agents -.->|guides all| Code
-    Agents -.->|guides all| Collab
 
     style Scripts fill:#51cf66,color:#fff
     style Agents fill:#4c6ef5,color:#fff,stroke:#000,stroke-width:2px
     style Tests fill:#ffa94d,color:#000
-    style PreCommit fill:#ff6b6b,color:#fff
-    style Architecture fill:#9775fa,color:#fff
+    style AgentFiles fill:#ffa94d,color:#000
+    style SkillFiles fill:#ffa94d,color:#000
 ```
 
 ---
@@ -337,20 +330,21 @@ graph TB
 | Benefit | Impact | Why it matters |
 |---------|--------|----------------|
 | **No setup overhead** | Start coding in 5 min | Focus on business logic, not config |
+| **Multi-language** | Go, TS, Python, Ruby, C | Pick the right tool for the job |
 | **Unified agent guidance** | All tools follow same rules | Consistency across Copilot, Claude, Cursor |
+| **Agent personas** | `.github/agents/` — 4 roles | Docs, lint, test, security agents ready |
+| **Custom skills** | `.github/skills/` | Troubleshoot and agent-customization skills |
 | **Security by default** | Pre-commit blocks secrets | OWASP A02 hardened; no credential leaks |
 | **Tested from day 1** | 80% coverage enforced | Confidence in every deployment |
-| **Type-safe** | TypeScript strict mode | Catch bugs before runtime |
+| **Auto-updated** | Framework updates before scaffold | Always uses latest patterns |
 | **Minimal instructions** | Agents stay focused | Research shows excessive instructions reduce success by >20% |
-| **Idempotent scaffold** | Safe to rerun anytime | No accidental overwrites; explicit `--force` flag |
-| **GitHub integration** | Workflows + personas | Automated CI/CD, security scans, team workflows |
 
 ---
 
 ## Scaffolded files reference
 
 <details>
-<summary><strong>Complete list of 51+ files created</strong></summary>
+<summary><strong>Key files created in every project</strong></summary>
 
 **Instructions** (Single source of truth via symlinks)
 - `AGENTS.md` — Authoritative agent guidance
@@ -358,19 +352,27 @@ graph TB
 - `.instructions.md` → `AGENTS.md` (symlink)
 - `.github/copilot-instructions.md` → `../../AGENTS.md` (symlink)
 
+**Agent Personas**
+- `.github/agents/docs-agent.md` — Documentation writing agent
+- `.github/agents/lint-agent.md` — Code style enforcement agent
+- `.github/agents/test-agent.md` — Test writing and coverage agent
+- `.github/agents/security-agent.md` — OWASP security review agent
+
+**Skills**
+- `.github/skills/troubleshoot.md` — Debug unexpected behavior
+- `.github/skills/agent-customization.md` — Manage agent files safely
+
 **Security**
-- `.gitignore` — Standard Node.js + TypeScript ignores
+- `.gitignore` — Secrets, keys, binaries blocked
 - `.env.example` — Environment variables template
 - `.github/hooks/pre-commit` — Block secrets before commit
 
 **GitHub Automation**
 - `.github/workflows/ci.yml` — CI/CD pipeline
-- `.github/workflows/security.yml` — Dependency scanning
+- `.github/workflows/security.yml` — Security scanning
 - `.github/PULL_REQUEST_TEMPLATE.md` — Standard PR format
-- `.github/ISSUE_TEMPLATE/bug.md` — Bug report template
-- `.github/ISSUE_TEMPLATE/feature.md` — Feature request template
+- `.github/ISSUE_TEMPLATE/` — Bug/feature templates
 - `.github/CODEOWNERS` — Code ownership rules
-- `.github/agents/*.md` — Specialized agent personas
 
 **VS Code Configuration**
 - `.vscode/settings.json` — Formatter, linter settings
@@ -378,38 +380,10 @@ graph TB
 - `.vscode/tasks.json` — Build, test, lint tasks
 - `.editorconfig` — Editor settings
 
-**TypeScript & Tooling**
-- `tsconfig.json` — TypeScript configuration (strict mode)
-- `jest.config.js` — Jest test configuration
-- `eslint.config.js` — ESLint rules
-- `.prettierrc.json` — Code formatter config
-- `package.json` — Dependencies and scripts
-
-**Source Code**
-- `src/lib/logger.ts` — Logging utility
-- `src/types/index.ts` — TypeScript interfaces
-- `src/api/` — Route handlers
-- `src/db/` — Database layer
-- `src/middleware/` — Express/Fastify middleware
-- `src/services/` — Business logic
-
-**Tests**
-- `tests/unit/logger.test.ts` — Example unit test
-- `tests/unit/` — Unit tests directory
-- `tests/integration/` — Integration tests directory
-- `tests/e2e/` — End-to-end tests directory
-
-**Documentation**
-- `docs/architecture.md` — System design
-- `docs/api.md` — API reference
-- `docs/CONTRIBUTING.md` — Development guide
-- `CONTRIBUTING.md` — Contributing guidelines
-- `CHANGELOG.md` — Version history
-- `README.md` — This file
-- `LICENSE` — MIT license
-- `specs/README.md` — Specifications directory
-- `specs/adr/` — Architecture Decision Records
-- `specs/rfc/` — Request for Comments
+**Hybrid Framework**
+- `specs/` — Spec-Kit layer (constitution, requirements, quality gates)
+- `.planning/` — GSD-v1 layer (project state, roadmap, decisions)
+- `.gsd/` — GSD-2 layer (preferences, model routing)
 
 </details>
 
@@ -417,13 +391,13 @@ graph TB
 
 ## Next steps
 
-1. **Run the base scaffold**: `bash scripts/scaffold-project.sh`
-2. **Run the hybrid scaffold**: `bash scripts/scaffold-hybrid-framework.sh`
-3. **Fill in the constitution**: Edit `specs/constitution.md` — no placeholders
-4. **Configure environment**: Copy `.env.example` → `.env`
-5. **Run tests**: `npm test` — verify everything works
-6. **Start the hybrid workflow**: `specs/constitution.md` → `.planning/ROADMAP.md` → `gsd auto`
-7. **Review Pull Requests**: See CI/CD, security, and agent workflows in action
+1. **Create a project**: `bash scripts/create-new-project.sh`
+2. **Fill in the constitution**: Edit `specs/constitution.md` — no placeholders
+3. **Configure environment**: Copy `.env.example` → `.env`
+4. **Run tests**: language-specific test command — verify everything works
+5. **Start the hybrid workflow**: `specs/constitution.md` → `.planning/ROADMAP.md` → `gsd auto`
+6. **Review Pull Requests**: See CI/CD, security, and agent workflows in action
+7. **Keep the framework updated**: `bash scripts/update-framework.sh`
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full development workflow.
 

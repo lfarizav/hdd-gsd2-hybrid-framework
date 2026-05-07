@@ -9,8 +9,10 @@
 # ✅ 3-layer hybrid framework (Spec-Kit + GSD-v1 + GSD-2)
 # ✅ Quality gates + CI/CD workflows
 # ✅ AI agent context (AGENTS.md + VS Code customizations)
+# ✅ Agent personas (.github/agents/) + skills (.github/skills/)
 
-bash scripts/create-new-project.sh my-awesome-api --install-clis
+# Run from the framework directory — interactive, prompts for everything:
+bash scripts/create-new-project.sh
 ```
 
 ---
@@ -44,18 +46,19 @@ create-new-project.sh (YOU ARE HERE)
 
 ## Step-by-Step Execution Flow
 
-### Step 0: Pre-flight Checks (create-new-project.sh)
+### Step 0: Auto-Update Framework (create-new-project.sh)
 ```bash
-✓ git --version
-✓ node --version (22+)
-✓ npm --version
-? gh CLI (optional, for GitHub integration)
+# Pulls latest framework changes before scaffolding:
+bash scripts/update-framework.sh
 ```
 
-### Step 1: Create Project Directory (create-new-project.sh)
+### Step 1: Interactive Prompts (create-new-project.sh)
 ```bash
-mkdir -p $HOME/$PROJECT_NAME/scripts/
-# Copy scaffold scripts into it (temporary)
+# Prompts collected (no positional arguments):
+# - Project name
+# - Parent directory (default: $HOME)
+# - Language: Go / TypeScript / Python / Ruby / C
+# - GitHub: create remote repo? public/private? org?
 ```
 
 ### Step 2: Run scaffold-project.sh
@@ -124,7 +127,15 @@ specs/
 └── workflows/              # quality-gate.yml
 ```
 
-### Step 4: Placeholder Substitution (create-new-project.sh)
+### Step 4: Agent Personas + Skills (scaffold-project.sh)
+```bash
+# Writes to .github/agents/:
+#   docs-agent.md, lint-agent.md, test-agent.md, security-agent.md
+# Writes to .github/skills/:
+#   README.md, troubleshoot.md, agent-customization.md
+```
+
+### Step 5: Placeholder Substitution (create-new-project.sh)
 ```bash
 # Replace generic placeholders with real values:
 PROJECT_NAME → my-awesome-api
@@ -133,7 +144,7 @@ PROJECT_TITLE → My Awesome API (title-cased)
 GITHUB_USER → (detected from gh auth)
 ```
 
-### Step 5: GitHub Integration (create-new-project.sh)
+### Step 6: GitHub Integration (create-new-project.sh)
 ```bash
 # If gh CLI available and authenticated:
 gh repo create $OWNER/$PROJECT_NAME --${VISIBILITY} --description "..."
@@ -142,13 +153,7 @@ git branch -M main
 git push -u origin main
 ```
 
-### Step 6: Cleanup (create-new-project.sh)
-```bash
-# Delete temporary scaffold scripts (they're framework infrastructure, not project code)
-rm scripts/scaffold-project.sh
-rm scripts/scaffold-hybrid-framework.sh
-# These are replaced by framework in the next step
-```
+> **Note:** Scaffold scripts live only in the framework (`scripts/`). They are NEVER copied into the new project. Run `bash scripts/update-framework.sh` from any project to pull the latest scaffold improvements.
 
 ---
 
@@ -269,25 +274,12 @@ project-name/
 
 ### Creating Projects
 ```bash
-# Interactive (prompts for everything)
+# Always fully interactive — prompts for everything
+# Run from the framework directory:
 bash scripts/create-new-project.sh
 
-# Minimal (name only)
-bash scripts/create-new-project.sh my-api
-
-# Fully specified
-bash scripts/create-new-project.sh my-api \
-  --dir ~/projects \
-  --public \
-  --org my-github-org \
-  --install-clis
-
-# Local-only (no GitHub)
-bash scripts/create-new-project.sh my-api --no-github
-
-# With language selection
-export PROJECT_LANG=go
-bash scripts/create-new-project.sh my-api
+# Force overwrite of existing project
+bash scripts/create-new-project.sh --force
 
 # Show help
 bash scripts/create-new-project.sh --help
@@ -455,7 +447,7 @@ go mod edit -go=1.22
 
 1. **Create your first project:**
    ```bash
-   bash scripts/create-new-project.sh my-first-api --install-clis
+   bash scripts/create-new-project.sh
    ```
 
 2. **Update framework periodically:**

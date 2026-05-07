@@ -239,6 +239,45 @@ Users can now follow this learning path:
 
 ---
 
+---
+
+## Session 2 Improvements (May 6, 2026)
+
+**Focus**: Fix script architecture, agent files, and documentation to reflect the new single-entry-point workflow.
+
+### Issues Resolved
+
+| # | Issue | Resolution |
+|---|-------|-----------|
+| 1 | `create-new-project.sh` called scripts from wrong directory | Fixed to use `$SCRIPT_DIR` absolute path |
+| 2 | `.github/skills/` folder missing | Created in framework; scaffold now generates it in new projects |
+| 3 | Agent files referenced TypeScript/Jest/ESLint | Rewrote all 4 `.github/agents/*.md` for Go-primary codebase |
+| 4 | `copilot-instructions.md` overwritten (symlink danger) | Restored as `ln -s ../AGENTS.md`; documented danger |
+| 5 | `AGENTS.md` content overwritten through symlink | Restored from git history (`d340224`) |
+| 6 | `scaffold-project.sh` not creating agents/skills | Added section 10b: writes all 4 agents + 3 skill files |
+
+### Files Updated This Session
+
+| File | Change |
+|------|--------|
+| `scripts/create-new-project.sh` | Fixed script path resolution; fully interactive (no positional args) |
+| `scripts/scaffold-project.sh` | Added `.github/agents/*.md` + `.github/skills/` generation |
+| `.github/agents/docs-agent.md` | Rewrote for Go stack |
+| `.github/agents/lint-agent.md` | Rewrote: gofmt/goimports/go vet instead of ESLint |
+| `.github/agents/test-agent.md` | Rewrote: stdlib go test + testify instead of Jest |
+| `.github/agents/security-agent.md` | Rewrote: Go race conditions, path traversal, OWASP |
+| `.github/skills/README.md` | New: skill directory index |
+| `.github/skills/troubleshoot.md` | New: debug unexpected agent behavior |
+| `.github/skills/agent-customization.md` | New: safely manage agent/instruction files |
+| `AGENTS.md` | Restored from git history after accidental overwrite |
+| `.github/copilot-instructions.md` | Restored as symlink to `../AGENTS.md` |
+| `README.md` | Updated: multi-language, new workflow, agents+skills in features |
+| `docs/GETTING_STARTED.md` | Rewritten: new `create-new-project.sh` single-command workflow |
+| `SCAFFOLDING_WORKFLOW.md` | Fixed: no positional args, no script-copying, new step flow |
+| `docs/architecture.md` | Fixed: multi-language, scaffold engine section, config layer |
+
+---
+
 ## Made with ❤️ by Luis Felipe Ariza Vesga
 
 This documentation improvement was created to help developers and teams quickly understand, adopt, and contribute to agentic engineering scaffolding for Visual Studio Code.

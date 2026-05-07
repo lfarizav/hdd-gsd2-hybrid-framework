@@ -6,12 +6,12 @@ This document describes the high-level design of the Agentic Engineering Scaffol
 
 ## Overview
 
-The project is designed as a **bootstrapping system** that generates production-ready TypeScript projects with integrated AI agent support. The architecture emphasizes:
+The project is designed as a **bootstrapping system** that generates production-ready multi-language projects with integrated AI agent support. The architecture emphasizes:
 
 - **Single Source of Truth** — One configuration file for all AI agents
 - **Modularity** — Independent concerns (security, testing, documentation)
 - **Automation** — Minimal manual setup through idempotent scripts
-- **Type Safety** — TypeScript strict mode enforced from day one
+- **Multi-language** — Go, TypeScript, Python, Ruby, and C supported
 - **Hybrid Framework** — Three complementary layers eliminate LLM hallucination at every phase of delivery
 
 ---
@@ -33,11 +33,12 @@ graph TB
     end
 
     subgraph Output["📦 Generated Project"]
-        Config["Configuration<br/>tsconfig.json<br/>jest.config.js<br/>eslint.config.js"]
+        Config["Configuration<br/>(language-specific)"]
         Instructions["AGENTS.md +<br/>3 symlinks"]
         Code["Source code<br/>skeleton"]
         Workflows["CI/CD workflows"]
         Tests["Test structure"]
+        AgentFiles[".github/agents/<br/>.github/skills/"]
     end
 
     subgraph Runtime["🚀 Runtime"]
@@ -71,34 +72,34 @@ graph TB
 
 ## Core components
 
-### 1. Scaffold Script
+### 1. Scaffold Engine
 
-**Location**: `scripts/scaffold-project.sh`
+**Entry point**: `scripts/create-new-project.sh`
+**Base scaffold**: `scripts/scaffold-project.sh`
+**Hybrid layers**: `scripts/scaffold-hybrid-framework.sh`
 
-**Purpose**: Idempotent project generator that creates 51+ files.
+**Purpose**: `create-new-project.sh` is the single interactive entry point. It auto-updates the framework, then orchestrates the two sub-scripts in sequence.
 
 **Key features**:
-- Runs without dependencies (pure bash)
+- Fully interactive — no positional arguments
+- Auto-updates framework before scaffolding (`update-framework.sh`)
 - `--force` flag for safe re-execution
 - Skips unchanged files
-- Creates directory structure
-- Generates configuration files
-- Establishes symlinks for single source of truth
+- Creates `.github/agents/` (4 role-based personas) and `.github/skills/`
+- Supports Go, TypeScript, Python, Ruby, and C
 
-**Pseudocode**:
+**Execution flow**:
 ```bash
-scaffold_project() {
-  1. Create directory structure
-  2. Parse configuration templates
-  3. Generate configuration files
-     → tsconfig.json, jest.config.js, eslint.config.js
-  4. Create AGENTS.md (central guidance)
-  5. Create symlinks (CLAUDE.md, .instructions.md, etc.)
-  6. Create source code skeleton
-  7. Create test structure
-  8. Create GitHub workflows
-  9. Validate all files created successfully
-}
+create-new-project.sh
+  └─ update-framework.sh          # Pull latest framework
+  └─ scaffold-project.sh          # Base infrastructure
+     ├─ Directories, AGENTS.md, .vscode
+     ├─ .github/agents/ + .github/skills/
+     └─ Language-specific files
+  └─ scaffold-hybrid-framework.sh # 3-layer framework
+     ├─ specs/  (Spec-Kit)
+     ├─ .planning/ (GSD-v1)
+     └─ .gsd/   (GSD-2)
 ```
 
 ### 2. Single Source of Truth (AGENTS.md)
@@ -130,8 +131,8 @@ graph LR
 ```
 
 **Content structure**:
-- **Testing**: Jest configuration, 80% coverage requirement
-- **Code style**: TypeScript strict, single quotes, no semicolons, 2-space indent
+- **Testing**: Language-specific test framework, 80% coverage requirement
+- **Code style**: Language-specific conventions (Go: gofmt/goimports; TS: ESLint+Prettier)
 - **Git workflow**: Branch naming, Conventional Commits, squash-merge policy
 - **Boundaries**: What agents can and cannot do
 - **Security**: OWASP compliance, secret handling
@@ -144,7 +145,7 @@ graph LR
 
 | Agent | Role | Reads From | Output |
 |-------|------|-----------|--------|
-| Lint Agent | Fix code style | `AGENTS.md` | Fixed TypeScript/config files |
+| Lint Agent | Fix code style | `AGENTS.md` | Formatted source files (language-specific) |
 | Test Agent | Write tests | `AGENTS.md` | Unit/integration test files |
 | Docs Agent | Write documentation | `AGENTS.md` | API docs, architecture guides |
 | Security Agent | Review vulnerabilities | `AGENTS.md` | Security audit report |
@@ -161,23 +162,22 @@ graph LR
 
 **Purpose**: Consistent tool behavior across all developers and CI/CD environments.
 
-**Key files**:
+**Key files by language**:
 
-| File | Purpose | Behavior |
-|------|---------|----------|
-| `tsconfig.json` | TypeScript compiler | Strict mode, ES2020 target, JSDoc support |
-| `jest.config.js` | Test runner | `ts-jest` preset, 80% coverage threshold |
-| `eslint.config.js` | Code linter | Flat config, @typescript-eslint parser |
-| `.prettierrc.json` | Code formatter | Single quotes, no semicolons, 2-space indent |
-| `.editorconfig` | Editor settings | Indent style, line endings, trim whitespace |
+| Language | Files | Purpose |
+|----------|-------|---------|
+| **Go** | `go.mod`, `Makefile` | Module definition, build/test targets |
+| **TypeScript** | `tsconfig.json`, `jest.config.js`, `eslint.config.js`, `.prettierrc.json` | Type safety, testing, linting, formatting |
+| **Python** | `pyproject.toml`, `Makefile` | Package config, build/test targets |
+| **All** | `.editorconfig`, `.vscode/settings.json` | Editor consistency |
 
-**Inheritance chain**:
+**Configuration chain**:
 ```mermaid
 graph LR
     AGENTS["AGENTS.md<br/>(Defines standards)"]
-    AGENTS -->|generates| Config["Configuration files<br/>tsconfig.json<br/>jest.config.js<br/>eslint.config.js"]
-    Config -->|enforces| Tools["Dev tools<br/>TypeScript<br/>Jest<br/>ESLint<br/>Prettier"]
-    Tools -->|guide| Output["Output<br/>Type-safe<br/>Tested<br/>Formatted"]
+    AGENTS -->|generates| Config["Language config files"]
+    Config -->|enforces| Tools["Dev tools<br/>(language-specific)"]
+    Tools -->|guide| Output["Output<br/>Tested<br/>Formatted"]
 
     style AGENTS fill:#4c6ef5,color:#fff
     style Config fill:#51cf66,color:#fff
@@ -194,7 +194,7 @@ graph LR
 graph LR
     Dev["Developer<br/>git commit"]
     Pre["Pre-commit hook<br/>executes"]
-    Check["Scan for secrets<br/>API keys<br/>certificates<br/>credentials"]
+    Check[\"Scan for secrets<br/>API keys<br/>certificates<br/>tokens\"]
 
     Dev --> Pre
     Pre --> Check
@@ -221,9 +221,9 @@ graph TB
     Code["Code changes"]
 
     subgraph Checks["🧪 Quality Checks"]
-        Lint["ESLint<br/>Code style"]
-        Type["TypeScript<br/>Type checking"]
-        Test["Jest<br/>Unit tests<br/>80% coverage"]
+        Lint["Language linter<br/>(gofmt / eslint)"]
+        Type["Static analysis<br/>(go vet / tsc)"]
+        Test["Language tests<br/>80% coverage"]
     end
 
     CI["CI/CD Pipeline<br/>GitHub Actions"]
@@ -272,7 +272,7 @@ graph LR
     Lint -->|runs| Type["TypeScript<br/>check"]
     Type -->|errors?| DevLoop["Fix issues"]
     DevLoop -->|edit| Code
-    Type -->|pass| Test["npm test<br/>Jest"]
+    Type -->|pass| Test["language test<br/>(go test / npm test)"]
     Test -->|coverage ok?| Commit["git commit"]
     Commit -->|runs| PreCommit["Pre-commit hook<br/>scan secrets"]
     PreCommit -->|secrets?| Block["Reject"]
@@ -383,8 +383,9 @@ No two frameworks are active simultaneously. Handoffs are file-based — no API 
 
 | Script | Purpose | Files created |
 |--------|---------|--------------|
-| `scripts/scaffold-project.sh` | Base project (TypeScript, CI/CD, AGENTS.md) | 51+ |
-| `scripts/scaffold-hybrid-framework.sh` | Three-layer hybrid framework | 15 |
+| `scripts/create-new-project.sh` | **Main entry point** — interactive orchestrator | — |
+| `scripts/scaffold-project.sh` | Base project (dirs, AGENTS.md, agents, skills, CI/CD) | ~50 |
+| `scripts/scaffold-hybrid-framework.sh` | Three-layer hybrid framework | ~30 |
 
 ---
 
@@ -420,16 +421,16 @@ No two frameworks are active simultaneously. Handoffs are file-based — no API 
 
 **Trade-off**: Slight complexity in bash script to detect and skip unchanged files.
 
-### 4. TypeScript Strict Mode from Day One
+### 4. Multi-Language Support from Day One
 
-**Decision**: No `any` types, no optional properties, full type safety.
+**Decision**: Support Go, TypeScript, Python, Ruby, and C with the same scaffold.
 
 **Rationale**:
-- Catches bugs at compile time
-- Improves code quality
-- Aligns with agentic engineering best practices
+- Teams choose the right language for the problem
+- Agentic workflows are language-agnostic
+- Quality gates (80% coverage, linting) apply universally
 
-**Trade-off**: Requires more upfront type definitions; may feel verbose initially.
+**Trade-off**: More conditional logic in scaffold scripts; tested across fewer language combinations.
 
 ### 6. Hybrid Framework: Sequential Phases, File-Based Handoffs
 

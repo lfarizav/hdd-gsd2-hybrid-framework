@@ -8,10 +8,11 @@ This guide walks you through setting up your first agentic engineering project u
 
 By the end of this guide, you'll have:
 
-✅ A production-ready TypeScript project
+✅ A production-ready project (Go, TypeScript, Python, Ruby, or C)
 ✅ Integrated AI agent support (GitHub Copilot, Claude, Cursor)
+✅ `.github/agents/` — domain-specific agent personas
+✅ `.github/skills/` — custom Copilot skills
 ✅ Automated testing with 80% coverage threshold
-✅ Code quality gates (linting, formatting, type-checking)
 ✅ Security hardening with pre-commit hooks
 ✅ GitHub CI/CD workflows
 ✅ Hybrid framework: Spec-Kit + GSD-v1 + GSD-2 installed and ready
@@ -20,76 +21,73 @@ By the end of this guide, you'll have:
 
 ## Prerequisites
 
-- **Node.js** 22+ — [Download](https://nodejs.org/)
 - **Git** — [Download](https://git-scm.com/)
 - **VS Code** — [Download](https://code.visualstudio.com/)
+- **Node.js** 22+ — [Download](https://nodejs.org/) _(required for TypeScript projects; optional otherwise)_
+- **Go** 1.22+ — [Download](https://go.dev/dl/) _(required for Go projects)_
+- **GitHub CLI** (`gh`) — [Download](https://cli.github.com/) _(optional, for GitHub repo creation)_
 - **GitHub account** (optional, but recommended for CI/CD)
 
 ---
 
-## Step 1: Clone and install
+## Step 1: Clone the framework
 
 ```bash
-# Clone the repository
-git clone https://github.com/OWNER/REPO.git
-cd REPO
-
-# Install dependencies
-npm install
+git clone https://github.com/lfarizav/hdd-gsd2-hybrid-framework.git
+cd hdd-gsd2-hybrid-framework
 ```
-
-**What happens**:
-- `node_modules/` is created with all dev tools (TypeScript, Jest, ESLint)
-- `package-lock.json` is generated (commit this!)
 
 ---
 
-## Step 2: Run the scaffold script
+## Step 2: Create a new project (single command)
 
 ```bash
-bash scripts/scaffold-project.sh
+bash scripts/create-new-project.sh
 ```
 
-**What this creates** (51+ files):
+The script is **fully interactive** — it will prompt you for everything:
+
+```
+  Project name: my-awesome-api
+  Where to create it? [/home/user]: /home/user
+  Language? [1=TypeScript 2=Go 3=Ruby 4=C 5=Python]: 2
+  Create GitHub repo? [y/N]: n
+  Install hybrid framework CLIs? [y/N]: n
+```
+
+**What happens automatically:**
+1. Framework checks for updates and pulls the latest version
+2. Creates the project directory
+3. Runs `scaffold-project.sh` — base infrastructure (80–120 files)
+4. Runs `scaffold-hybrid-framework.sh` — 3-layer hybrid framework
+5. Creates initial git commit
+6. _(optional)_ Creates GitHub repo via `gh` CLI
+
+**What gets created:**
 
 ```mermaid
 graph LR
-    Script["scaffold-project.sh"] --> Creates["Creates 51+ files"]
+    Script["create-new-project.sh"] --> Base["Base scaffold"]
+    Script --> Hybrid["Hybrid framework"]
 
-    Creates --> Config["⚙️ Configuration<br/>tsconfig.json<br/>jest.config.js<br/>eslint.config.js"]
-    Creates --> Instructions["📋 Instructions<br/>AGENTS.md<br/>symlinks"]
-    Creates --> Code["💻 Source code<br/>src/ skeleton<br/>tests/"]
-    Creates --> GitHub["🤝 GitHub<br/>workflows<br/>templates"]
-    Creates --> Security["🔐 Security<br/>pre-commit<br/>.env.example"]
-    Creates --> Docs["📚 Documentation<br/>README.md<br/>CONTRIBUTING.md"]
+    Base --> Code["💻 Source skeleton<br/>src/ or cmd/internal/"]
+    Base --> Instructions["📋 AGENTS.md<br/>+ symlinks"]
+    Base --> GitHub["🤝 .github/<br/>agents/ skills/ workflows/"]
+    Base --> Security["🔐 pre-commit hook<br/>.env.example"]
+
+    Hybrid --> Spec["Layer 1: Spec-Kit<br/>specs/"]
+    Hybrid --> Plan["Layer 2: GSD-v1<br/>.planning/"]
+    Hybrid --> Exec["Layer 3: GSD-2<br/>.gsd/"]
 
     style Script fill:#51cf66,color:#fff
-    style Creates fill:#51cf66,color:#fff
-    style Config fill:#4c6ef5,color:#fff
+    style Base fill:#4c6ef5,color:#fff
+    style Hybrid fill:#9775fa,color:#fff
     style Instructions fill:#4c6ef5,color:#fff,stroke:#000,stroke-width:2px
+    style GitHub fill:#ffa94d,color:#000
 ```
 
-**Output**:
-```
-✓ Created 51 files
-✓ Symlinks: CLAUDE.md → AGENTS.md
-✓ Project structure ready
-✓ Next: Configure .env
-```
-
----
-
-## Step 3: Install the hybrid framework
-
-```bash
-bash scripts/scaffold-hybrid-framework.sh
-```
-
-**Optional — also install the CLIs** (Spec-Kit and GSD-2):
-
-```bash
-bash scripts/scaffold-hybrid-framework.sh --install-clis
-```
+> **Note:** `scaffold-project.sh` and `scaffold-hybrid-framework.sh` are framework tools.
+> They stay in the framework directory — **never copied to your project**.
 
 **What this creates** (15 files across 3 layers):
 
@@ -125,9 +123,11 @@ nano specs/constitution.md
 
 ---
 
-## Step 4: Configure environment variables
+## Step 3: Configure environment variables
 
 ```bash
+cd /path/to/your-new-project
+
 # Copy the template
 cp .env.example .env
 
@@ -152,52 +152,41 @@ API_KEY=your-secret-key-here
 
 ---
 
-## Step 5: Verify setup with tests
+## Step 4: Verify setup with tests
 
+**For Go projects:**
 ```bash
-# Run all checks
-npm test              # Run tests
-npm run lint          # Check code style
-npm run typecheck     # TypeScript check
-npm run format        # Auto-format code
+go test ./...
+go vet ./...
+gofmt -w ./...
 ```
 
-**Expected output**:
+**For TypeScript projects:**
+```bash
+npm test
+npm run lint
+npm run typecheck
 ```
-PASS  tests/unit/logger.test.ts
-  ✓ logger exports a function (XX ms)
-  ✓ logger handles errors (XX ms)
 
-Test Suites: 1 passed, 1 total
-Coverage: ✓ 80% (exceeds threshold)
+**Expected output (Go)**:
+```
+ok  	github.com/OWNER/my-awesome-api/internal/...  0.123s
+coverage: 82.4% of statements
 ```
 
 ---
 
-## Step 6: Open in VS Code
+## Step 5: Open in VS Code
 
 ```bash
-code .
+code /path/to/your-new-project
 ```
-
-**First time in VS Code?** You'll see a notification:
-
-```
-"Recommended extensions for this workspace"
-
-[Install] [Dismiss]
-```
-
-Click **[Install]** to get recommended tools:
-- ESLint — Real-time code style checking
-- Prettier — Code formatter
-- Thunder Client or REST Client — API testing
 
 **Your VS Code is now configured** with:
-- TypeScript strict mode
-- ESLint rules
-- Prettier formatting
-- Test runner integration
+- `.github/agents/` — docs, lint, test, security agent personas
+- `.github/skills/` — troubleshoot, agent-customization skills
+- `.vscode/` — workspace settings, recommended extensions, tasks
+- `AGENTS.md` — AI agent context (symlinked from `.github/copilot-instructions.md`)
 
 ---
 
